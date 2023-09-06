@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "904803102717",
+    "project_id": "my-mobile-app-project-ee6b7",
+    "storage_bucket": "my-mobile-app-project-ee6b7.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:904803102717:android:b8f291de1f303136fcf394",
+        "android_client_info": {
+          "package_name": "com.beegooder_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "904803102717-e0qukf3a1v3v1gps4eisrsnk0ufjbpn0.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDfNNUy20LGZDTOjfCB3VFpFNH8z_JR2vA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "904803102717-e0qukf3a1v3v1gps4eisrsnk0ufjbpn0.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

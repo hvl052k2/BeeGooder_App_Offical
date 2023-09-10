@@ -1,4 +1,4 @@
-import { AuthProvider } from "./AuthProvider";
+import { AuthProvider } from "./AuthProvider.android";
 import Routes from "./Routes";
 
 export default Providers = () => {

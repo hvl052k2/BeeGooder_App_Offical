@@ -24,6 +24,7 @@ export default AuthStack = () => {
         setIsFirstLaunch(false);
       }
     });
+
   }, []);
 
   if (isFirstLaunch === null) {

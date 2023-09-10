@@ -2,9 +2,9 @@ import {NavigationContainer} from '@react-navigation/native';
 import React, {useContext, useState, useEffect} from 'react';
 import auth from '@react-native-firebase/auth';
 
-import AuthStack from './AuthStack';
+import AuthStack from './AuthStack.android';
 import AppStack from './AppStack';
-import {AuthContext} from './AuthProvider';
+import {AuthContext} from './AuthProvider.android';
 
 export default Routes = () => {
   const {user, setUser} = useContext(AuthContext);

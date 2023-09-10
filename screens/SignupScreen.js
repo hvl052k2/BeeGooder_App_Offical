@@ -4,7 +4,7 @@ import FormButton from "../components/FormButton";
 import FormInput from "../components/FormInput";
 import SocialButton from "../components/SocialButton";
 import { useContext, useState } from "react";
-import { AuthContext } from "../navigation/AuthProvider";
+import { AuthContext } from "../navigation/AuthProvider.android";
 
 export default LoginScreen = ({ navigation }) => {
   const [email, setEmail] = useState("");

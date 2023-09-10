@@ -4,13 +4,13 @@ import FormButton from "../components/FormButton";
 import FormInput from "../components/FormInput";
 import SocialButton from "../components/SocialButton";
 import { useState, useContext } from "react";
-import { AuthContext } from "../navigation/AuthProvider";
+import { AuthContext } from "../navigation/AuthProvider.android";
 
 export default LoginScreen = ({ navigation }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [visible, setVisible] = useState(false);
-  const {login} = useContext(AuthContext)
+  const {login, googleLogin, fbLogin} = useContext(AuthContext)
 
   return (
     <View style={styles.container}>
@@ -64,7 +64,7 @@ export default LoginScreen = ({ navigation }) => {
         btnType="logo-facebook"
         color="#4867aa"
         backgroundColor="#e6eaf4"
-        onPress={() => {}}
+        onPress={() => fbLogin()}
       />
 
       <SocialButton
@@ -72,7 +72,7 @@ export default LoginScreen = ({ navigation }) => {
         btnType="logo-google"
         color="#de4d41"
         backgroundColor="#f5e7ea"
-        onPress={() => {}}
+        onPress={() => googleLogin()}
       />
 
       <View style={styles.navButton}>

@@ -1,3 +1,6 @@
 <resources>
     <string name="app_name">BeeGooder_App</string>
+    <string name="facebook_app_id">2355696577945979</string>
+    <string name="fb_login_protocol_scheme">fb2355696577945979</string>
+    <string name="facebook_client_token">fefa6b051d55641c72e9eab29f172017</string>
 </resources>

@@ -1,5 +1,12 @@
 import React, {useContext, useState} from 'react';
-import {View, Text, StyleSheet, Button, Alert} from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Button,
+  Alert,
+  ActivityIndicator,
+} from 'react-native';
 import ActionButton from 'react-native-action-button';
 import Icon from 'react-native-vector-icons/Ionicons';
 import ImagePicker from 'react-native-image-crop-picker';
@@ -11,6 +18,7 @@ import {
   AddImage,
   SubmitBtn,
   SubmitBtnText,
+  StatusWrapper,
 } from '../styles/AddPost';
 
 export default AddPostScreen = () => {
@@ -44,10 +52,30 @@ export default AddPostScreen = () => {
 
   const submitPost = async () => {
     const uploadUri = image;
-    let filename = uploadUri.substring(uploadUri.lastIndexOf('/') + 1);
+    let filename = 'IMG_' + uploadUri.substring(uploadUri.lastIndexOf('-') + 1);
+
+    //Add timestamp to File Name
+    // const extension = filename.split(".").prop();
+    // const name = filename.split(".").slice(0, -1).join(".");
+    // filename = name + Date.now() + "." + extension;
+
     setUploading(true);
+    setTransferred(0);
+
+    // Set transferred state
+    const task = storage().ref(filename).putFile(uploadUri);
+    task.on('state_changed', taskSnapshot => {
+      console.log(
+        `${taskSnapshot.bytesTransferred} transferred out of ${taskSnapshot.totalBytes}`,
+      );
+      setTransferred(
+        Math.round(taskSnapshot.bytesTransferred / taskSnapshot.totalBytes) *
+          100,
+      );
+    });
+
     try {
-      await storage().ref(filename).putFile(uploadUri);
+      await task;
       setUploading(false);
       Alert.alert(
         'Image uploaded',
@@ -68,9 +96,16 @@ export default AddPostScreen = () => {
           multiline
           numberOfLines={4}
         />
-        <SubmitBtn onPress={submitPost}>
-          <SubmitBtnText>Post</SubmitBtnText>
-        </SubmitBtn>
+        {uploading ? (
+          <StatusWrapper>
+            <Text>{transferred} % Completed!</Text>
+            <ActivityIndicator size="large" color="#0000ff" />
+          </StatusWrapper>
+        ) : (
+          <SubmitBtn onPress={submitPost}>
+            <SubmitBtnText>Post</SubmitBtnText>
+          </SubmitBtn>
+        )}
       </InputWrapper>
       <ActionButton buttonColor="rgba(231,76,60,1)">
         <ActionButton.Item

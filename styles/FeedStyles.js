@@ -54,7 +54,7 @@ export const PostText = styled.Text`
 export const PostImg = styled.Image`
   width: 100%;
   height: 250px;
-  /* margin-top: 15px; */
+  margin-top: 15px;
 `;
 
 export const Devider = styled.View`

@@ -58,7 +58,7 @@ const FeedStack = ({navigation}) => (
         },
         headerBackTitleVisible: false,
         headerBackImage: () => (
-          <TouchableOpacity style={styles.gobackButton}>
+          <TouchableOpacity style={styles.gobackButton} onPress={()=>navigation.goBack()}>
             <Icon name="arrow-back" size={30} color="#2e64e5" />
           </TouchableOpacity>
         ),

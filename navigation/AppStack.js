@@ -3,6 +3,7 @@ import {View, StyleSheet, TouchableOpacity, Text} from 'react-native';
 import {createStackNavigator} from '@react-navigation/stack';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import Icon from 'react-native-vector-icons/Ionicons';
+import {getFocusedRouteNameFromRoute} from '@react-navigation/native';
 
 // import screens
 import HomeScreen from '../screens/HomeScreen';
@@ -18,14 +19,15 @@ const Tab = createBottomTabNavigator();
 const FeedStack = ({navigation}) => (
   <Stack.Navigator>
     <Stack.Screen
-      name="HomeScreen"
+      name="BeeGooder"
       component={HomeScreen}
       options={{
         headerTitleAlign: 'center',
         headerTitleStyle: {
           color: '#2e64e5',
           fontFamily: 'Kufam-SemiBoldItalic',
-          fontSize: 18,
+          fontSize: 20,
+          fontWeight: 'bold',
         },
         headerStyle: {
           shadowColor: '#fff',
@@ -58,7 +60,9 @@ const FeedStack = ({navigation}) => (
         },
         headerBackTitleVisible: false,
         headerBackImage: () => (
-          <TouchableOpacity style={styles.gobackButton} onPress={()=>navigation.goBack()}>
+          <TouchableOpacity
+            style={styles.gobackButton}
+            onPress={() => navigation.goBack()}>
             <Icon name="arrow-back" size={30} color="#2e64e5" />
           </TouchableOpacity>
         ),
@@ -91,17 +95,22 @@ const FeedStack = ({navigation}) => (
 );
 
 const MessageStack = ({navigation}) => (
-  <Stack.Navigator
-    screenOptions={{
-      headerShown: false,
-    }}>
-    <Stack.Screen name="MessagesScreen" component={MessagesScreen} />
+  <Stack.Navigator>
+    <Stack.Screen
+      name="MessagesScreen"
+      component={MessagesScreen}
+      options={{
+        headerTitle: 'Messages',
+        headerTitleAlign: 'center',
+      }}
+    />
     <Stack.Screen
       name="ChatScreen"
       component={ChatScreen}
       options={({route}) => ({
         title: route.params.userName,
         headerBackTitleVisible: false,
+        headerTitleAlign: 'center',
       })}
     />
   </Stack.Navigator>
@@ -133,33 +142,49 @@ const ProfileStack = ({navigation}) => (
   </Stack.Navigator>
 );
 
-const AppStack = () => {
+const AppStack = ({route}) => {
+  const getTabBarVisibility = route => {
+    // const routeName = route.state
+    //   ? route.state.routes[route.state.index].name
+    //   : '';
+    const routeName = getFocusedRouteNameFromRoute(route);
+    if (routeName == 'ChatScreen' || routeName == 'AddPostScreen') {
+      // console.log(routeName);
+      return false;
+    }
+    // console.log(routeName);
+    return true;
+  };
   return (
     <Tab.Navigator
       screenOptions={{
         activeTintColor: '#2e64e5',
-        headerShown: false,
       }}>
+
       <Tab.Screen
         name="Home"
         component={FeedStack}
-        options={{
+        options={({route}) => ({
+          headerShown: false,
           tabBarLabel: 'Home',
           tabBarIcon: ({color, size}) => (
             <Icon name="home-outline" size={size} color={color} />
           ),
-        }}
+          tabBarStyle: {display: getTabBarVisibility(route) ? 'flex' : 'none'},
+        })}
       />
 
       <Tab.Screen
         name="Messages"
         component={MessageStack}
-        options={{
+        options={({route}) => ({
           tabBarLabel: 'Messages',
           tabBarIcon: ({color, size}) => (
             <Icon name="chatbox-ellipses-outline" size={size} color={color} />
           ),
-        }}
+          headerShown: false,
+          tabBarStyle: {display: getTabBarVisibility(route) ? 'flex' : 'none'},
+        })}
       />
 
       <Tab.Screen

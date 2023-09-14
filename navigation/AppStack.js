@@ -73,10 +73,10 @@ const FeedStack = ({navigation}) => (
     />
 
     <Stack.Screen
-      name="ProfileScreen"
+      name="HomeProfile"
       component={ProfileScreen}
       options={{
-        title: 'Profile',
+        title: '',
         headerTitleAlign: 'center',
         headerStyle: {
           backgroundColor: '#fff',
@@ -85,7 +85,7 @@ const FeedStack = ({navigation}) => (
         },
         headerBackTitleVisible: false,
         headerBackImage: () => (
-          <TouchableOpacity style={styles.gobackButton}>
+          <TouchableOpacity style={styles.gobackButton} onPress={()=>navigation.goBack()}>
             <Icon name="arrow-back" size={30} color="#2e64e5" />
           </TouchableOpacity>
         ),
@@ -195,6 +195,7 @@ const AppStack = ({route}) => {
           tabBarIcon: ({color, size}) => (
             <Icon name="person-outline" size={size} color={color} />
           ),
+          headerShown: false,
         }}
       />
     </Tab.Navigator>

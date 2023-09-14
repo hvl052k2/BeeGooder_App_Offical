@@ -19,8 +19,9 @@ import {
   InteractionText,
   Devider,
 } from '../styles/FeedStyles';
+import {TouchableOpacity} from 'react-native';
 
-const PostCard = ({item, onDelete}) => {
+const PostCard = ({item, onDelete, onPress}) => {
   const {user, logout} = useContext(AuthContext);
   likeIcon = item.liked ? 'heart' : 'heart-outline';
   likeIconColor = item.liked ? '#2e64e5' : '#333';
@@ -46,7 +47,9 @@ const PostCard = ({item, onDelete}) => {
       <UserInfo>
         <UserImg source={{uri: item.userImg}} />
         <UserInfoText>
-          <UserName>{item.userName}</UserName>
+          <TouchableOpacity onPress={onPress}>
+            <UserName>{item.userName}</UserName>
+          </TouchableOpacity>
           <PostTime>{moment(item.postTime.toDate()).fromNow()}</PostTime>
         </UserInfoText>
       </UserInfo>

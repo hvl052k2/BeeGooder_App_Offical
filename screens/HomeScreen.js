@@ -1,5 +1,12 @@
 import React, {useContext, useEffect, useState} from 'react';
-import {View, Text, StyleSheet, FlatList, Alert, ScrollView} from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  Alert,
+  ScrollView,
+} from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import PostCard from '../components/PostCard';
 import {Container} from '../styles/FeedStyles';
@@ -65,8 +72,8 @@ import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 //   },
 // ];
 
-export default HomeScreen = () => {
-  const [posts, setPost] = useState(null);
+export default HomeScreen = ({navigation}) => {
+  const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [deleted, setDeleted] = useState(false);
 
@@ -78,7 +85,7 @@ export default HomeScreen = () => {
         .orderBy('postTime')
         .get()
         .then(querySnapshot => {
-          console.log('Total posts: ', querySnapshot.size);
+          // console.log('Total posts: ', querySnapshot.size);
 
           querySnapshot.forEach(documentSnapshot => {
             // console.log(
@@ -104,7 +111,7 @@ export default HomeScreen = () => {
           });
         });
 
-      setPost(list);
+      setPosts(list);
       if (loading) {
         setLoading(false);
       }
@@ -247,7 +254,15 @@ export default HomeScreen = () => {
         <FlatList
           data={posts}
           renderItem={({item}) => (
-            <PostCard item={item} onDelete={handleDelete} />
+            <PostCard
+              item={item}
+              onDelete={handleDelete}
+              onPress={() =>
+                navigation.navigate('HomeProfile', {
+                  userId: item.userId,
+                })
+              }
+            />
           )}
           keyExtractor={item => item.id} // Mỗi item được phân biệt bởi id
           ListHeaderComponent={listHeader}

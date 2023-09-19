@@ -18,7 +18,7 @@ export default ChatScreen = () => {
         user: {
           _id: 2,
           name: 'React Native',
-          avatar: 'https://placeimg.com/140/140/any',
+          avatar: require("../assets/users/user-1.jpg"),
         },
       },
       {
@@ -28,7 +28,7 @@ export default ChatScreen = () => {
         user: {
           _id: 1,
           name: 'React Native',
-          avatar: 'https://placeimg.com/140/140/any',
+          avatar: require("../assets/users/user-2.jpg"),
         },
       },
     ]);

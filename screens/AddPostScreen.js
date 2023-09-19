@@ -14,7 +14,6 @@ import storage from '@react-native-firebase/storage';
 import firestore from '@react-native-firebase/firestore';
 import {AuthContext} from '../navigation/AuthProvider.android';
 
-
 import {
   InputField,
   InputWrapper,
@@ -77,13 +76,16 @@ export default AddPostScreen = () => {
         );
         setPost(null);
       })
-      .catch((error)=>{
-        console.log("Some thing went wrong with added post to firestore.", error);
+      .catch(error => {
+        console.log(
+          'Some thing went wrong with added post to firestore.',
+          error,
+        );
       });
   };
 
   const uploadImage = async () => {
-    if(image == null){
+    if (image == null) {
       return null;
     }
     const uploadUri = image;
@@ -132,7 +134,7 @@ export default AddPostScreen = () => {
           multiline
           numberOfLines={4}
           value={post}
-          onChangeText={(content)=>setPost(content)}
+          onChangeText={content => setPost(content)}
         />
         {uploading ? (
           <StatusWrapper>

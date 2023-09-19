@@ -2,6 +2,8 @@ import React, {createContext, useState} from 'react';
 import auth from '@react-native-firebase/auth';
 import {GoogleSignin} from '@react-native-google-signin/google-signin';
 import {LoginManager, AccessToken} from 'react-native-fbsdk-next';
+import firestore from '@react-native-firebase/firestore';
+import storage from '@react-native-firebase/storage';
 
 export const AuthContext = createContext();
 
@@ -65,7 +67,29 @@ export const AuthProvider = ({children}) => {
         },
         register: async (email, password) => {
           try {
-            await auth().createUserWithEmailAndPassword(email, password);
+            await auth()
+              .createUserWithEmailAndPassword(email, password)
+              .then(() => {
+                firestore()
+                  .collection('users')
+                  .doc(auth().currentUser.uid)
+                  .set({
+                    fname: '',
+                    lname: '',
+                    email: '',
+                    createAt: firestore.Timestamp.fromDate(new Date()),
+                    userImg: null,
+                  })
+                  .catch(error => {
+                    console.log(
+                      'Something went wrong with added user to firestore: ',
+                      error,
+                    );
+                  });
+              })
+              .catch(error => {
+                console.log('Something went wrong with sign up: ', error);
+              });
           } catch (e) {
             console.log(e);
           }

@@ -1,8 +1,9 @@
-import React, {useContext} from 'react';
+import React, {useContext, useState, useEffect} from 'react';
 import Icon from 'react-native-vector-icons/Ionicons';
 import {AuthContext} from '../navigation/AuthProvider.android';
 import moment from 'moment';
 import ProgressiveImage from './ProgressiveImage';
+import firestore from '@react-native-firebase/firestore';
 
 import {
   Container,
@@ -23,6 +24,8 @@ import {TouchableOpacity} from 'react-native';
 
 const PostCard = ({item, onDelete, onPress}) => {
   const {user, logout} = useContext(AuthContext);
+  const [userData, setUserData] = useState(null);
+
   likeIcon = item.liked ? 'heart' : 'heart-outline';
   likeIconColor = item.liked ? '#2e64e5' : '#333';
 
@@ -42,18 +45,53 @@ const PostCard = ({item, onDelete, onPress}) => {
     commentText = 'Comment';
   }
 
+  const getUser = async () => {
+    await firestore()
+      .collection('users')
+      .doc(item.userId)
+      .get()
+      .then(documentSnapshot => {
+        if (documentSnapshot.exists) {
+          // console.log('User Data: ', documentSnapshot.data());
+          setUserData(documentSnapshot.data());
+        }
+      });
+  };
+
+  useEffect(() => {
+    getUser();
+    // console.log(`Name of user: ${userData.fname} ${userData.lname}`);
+  }, []);
+
+  // useEffect(() => {
+  //   getUser();
+  //   console.log(`Name of user: ${userData.fname} ${userData.lname}`);
+  // }, [userData]);
+
   return (
     <Card>
       <UserInfo>
-        <UserImg source={{uri: item.userImg}} />
+        <TouchableOpacity onPress={onPress}>
+          <UserImg
+            source={{
+              uri: userData
+                ? userData.userImg ||
+                  'https://lh5.googleusercontent.com/-b0PKyNuQv5s/AAAAAAAAAAI/AAAAAAAAAAA/AMZuuclxAM4M1SCBGAO7Rp-QP6zgBEUkOQ/s96-c/photo.jpg'
+                : 'https://lh5.googleusercontent.com/-b0PKyNuQv5s/AAAAAAAAAAI/AAAAAAAAAAA/AMZuuclxAM4M1SCBGAO7Rp-QP6zgBEUkOQ/s96-c/photo.jpg',
+            }}
+          />
+        </TouchableOpacity>
         <UserInfoText>
           <TouchableOpacity onPress={onPress}>
-            <UserName>{item.userName}</UserName>
+            <UserName>
+              {userData ? userData.fname || 'Test' : 'Test'}{' '}
+              {userData ? userData.lname || 'User' : 'User'}
+            </UserName>
           </TouchableOpacity>
           <PostTime>{moment(item.postTime.toDate()).fromNow()}</PostTime>
         </UserInfoText>
       </UserInfo>
-      <PostText>{item.post}</PostText>
+      {item.post != null ? <PostText>{item.post}</PostText> : null}
       {/* {item.postImg != null ? (
         <PostImg source={{uri: item.postImg}} />
       ) : (

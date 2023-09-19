@@ -85,7 +85,9 @@ const FeedStack = ({navigation}) => (
         },
         headerBackTitleVisible: false,
         headerBackImage: () => (
-          <TouchableOpacity style={styles.gobackButton} onPress={()=>navigation.goBack()}>
+          <TouchableOpacity
+            style={styles.gobackButton}
+            onPress={() => navigation.goBack()}>
             <Icon name="arrow-back" size={30} color="#2e64e5" />
           </TouchableOpacity>
         ),
@@ -148,7 +150,11 @@ const AppStack = ({route}) => {
     //   ? route.state.routes[route.state.index].name
     //   : '';
     const routeName = getFocusedRouteNameFromRoute(route);
-    if (routeName == 'ChatScreen' || routeName == 'AddPostScreen') {
+    if (
+      routeName == 'ChatScreen' ||
+      routeName == 'AddPostScreen' ||
+      routeName == 'EditProfileScreen'
+    ) {
       // console.log(routeName);
       return false;
     }
@@ -160,7 +166,6 @@ const AppStack = ({route}) => {
       screenOptions={{
         activeTintColor: '#2e64e5',
       }}>
-
       <Tab.Screen
         name="Home"
         component={FeedStack}
@@ -190,13 +195,14 @@ const AppStack = ({route}) => {
       <Tab.Screen
         name="Profile"
         component={ProfileStack}
-        options={{
+        options={({route}) => ({
           tabBarLabel: 'Profile',
           tabBarIcon: ({color, size}) => (
             <Icon name="person-outline" size={size} color={color} />
           ),
           headerShown: false,
-        }}
+          tabBarStyle: {display: getTabBarVisibility(route) ? 'flex' : 'none'},
+        })}
       />
     </Tab.Navigator>
   );

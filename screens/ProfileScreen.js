@@ -7,6 +7,7 @@ import {
   ScrollView,
   Image,
   TouchableOpacity,
+  Alert,
 } from 'react-native';
 import FormButton from '../components/FormButton';
 import {AuthContext} from '../navigation/AuthProvider.android';
@@ -20,13 +21,14 @@ export default ProfileScreen = ({navigation, route}) => {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [deleted, setDeleted] = useState(false);
+  const [userData, setUserData] = useState(null);
 
   const fetchPosts = async () => {
     try {
       const list = [];
       await firestore()
         .collection('Posts')
-        .where('userId', '==', user.uid)
+        .where('userId', '==', route.params ? route.params.userId : user.uid)
         .orderBy('postTime', 'desc')
         .get()
         .then(querySnapshot => {
@@ -65,12 +67,105 @@ export default ProfileScreen = ({navigation, route}) => {
     }
   };
 
-  useEffect(() => {
-    fetchPosts();
-  }, []);
+  const getUser = async () => {
+    await firestore()
+      .collection('users')
+      .doc(route.params ? route.params.userId : user.uid)
+      .get()
+      .then(documentSnapshot => {
+        if (documentSnapshot.exists) {
+          // console.log('User Data: ', documentSnapshot.data());
+          setUserData(documentSnapshot.data());
+        }
+      });
+  };
 
-  const handleDelete = () => {};
-  // console.log("Posts: ", posts);
+  // useEffect(() => {
+  //   getUser();
+  //   fetchPosts();
+  //   navigation.addListener('focus', () => setLoading(!loading)); //cho phép refresh lại screen khi có thay đổi
+  // }, [navigation, loading]);
+
+  // useEffect(() => {
+  //   fetchPosts();
+  // }, []);
+
+  useEffect(() => {
+    getUser();
+    fetchPosts();
+    setDeleted(false);
+    navigation.addListener('focus', () => setLoading(!loading)); //cho phép refresh lại screen khi có thay đổi
+    console.log('Refreshed');
+  }, [deleted, navigation, loading]);
+
+  const handleDelete = postId => {
+    Alert.alert(
+      'Delete post',
+      'Are you sure?',
+      [
+        {
+          text: 'Cancel',
+          onPress: () => console.log('Cancle Pressed!'),
+          style: 'cancel',
+        },
+        {
+          text: 'Ok',
+          onPress: () => {
+            deletePost(postId);
+          },
+        },
+      ],
+      {cancelable: false},
+    );
+  };
+
+  const deletePost = postId => {
+    // console.log('Current post id: ', postId);
+    firestore()
+      .collection('Posts')
+      .doc(postId)
+      .get()
+      .then(documentSnapshot => {
+        if (documentSnapshot.exists) {
+          const {postImg} = documentSnapshot.data();
+          if (postImg != null) {
+            const storageRef = storage().refFromURL(postImg);
+            const imageRef = storage().ref(storageRef.fullPath);
+            imageRef
+              .delete()
+              .then(() => {
+                console.log(`${postImg} has been deleted successfuly!`);
+                deleteFirestoreData(postId);
+                setDeleted(true);
+              })
+              .catch(e => {
+                console.log('Error while deleting the image: ', e);
+              });
+          } else {
+            deleteFirestoreData(postId);
+            setDeleted(true);
+          }
+        }
+      });
+  };
+
+  const deleteFirestoreData = postId => {
+    firestore()
+      .collection('Posts')
+      .doc(postId)
+      .delete()
+      .then(() => {
+        console.log('Post deleted!');
+        Alert.alert(
+          'Post deleted!',
+          'Your post has been deleted successfully!',
+        );
+      })
+      .catch(e => {
+        console.log('Error deleting post: ', e);
+      });
+  };
+
   return (
     <SafeAreaView style={{flex: 1, backgroundColor: '#fff'}}>
       <ScrollView
@@ -79,11 +174,21 @@ export default ProfileScreen = ({navigation, route}) => {
         showsVerticalScrollIndicator={false}>
         <Image
           style={styles.userImg}
-          source={require('../assets/users/user-8.jpg')}
+          source={{
+            uri: userData
+              ? userData.userImg ||
+                'https://lh5.googleusercontent.com/-b0PKyNuQv5s/AAAAAAAAAAI/AAAAAAAAAAA/AMZuuclxAM4M1SCBGAO7Rp-QP6zgBEUkOQ/s96-c/photo.jpg'
+              : 'https://lh5.googleusercontent.com/-b0PKyNuQv5s/AAAAAAAAAAI/AAAAAAAAAAA/AMZuuclxAM4M1SCBGAO7Rp-QP6zgBEUkOQ/s96-c/photo.jpg',
+          }}
         />
-        <Text style={styles.userName}>Jessica</Text>
-        <Text>{route.params ? route.params.userId : user.uid}</Text>
-        <Text style={styles.aboutUser}>Hi! I'm Jessica</Text>
+        <Text style={styles.userName}>
+          {userData ? userData.fname || 'Test' : 'Test'}{' '}
+          {userData ? userData.lname || 'User' : 'User'}
+        </Text>
+        {/* <Text>{route.params ? route.params.userId : user.uid}</Text> */}
+        <Text style={styles.aboutUser}>
+          {userData ? userData.about || 'No details added.' : ''}
+        </Text>
         <View style={styles.userBtnWrapper}>
           {route.params ? (
             <>
@@ -96,10 +201,12 @@ export default ProfileScreen = ({navigation, route}) => {
             </>
           ) : (
             <>
-              <TouchableOpacity style={styles.userBtn} onPress={() => navigation.navigate("EditProfileScreen")}>
+              <TouchableOpacity
+                style={styles.userBtn}
+                onPress={() => navigation.navigate('EditProfileScreen')}>
                 <Text style={styles.userBtnTxt}>Edit</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.userBtn} onPress={() => logout()}>
+              <TouchableOpacity style={styles.userBtn} onPress={logout}>
                 <Text style={styles.userBtnTxt}>Logout</Text>
               </TouchableOpacity>
             </>
@@ -107,7 +214,7 @@ export default ProfileScreen = ({navigation, route}) => {
         </View>
         <View style={styles.userInfoWrapper}>
           <View style={styles.userInfoItem}>
-            <Text style={styles.userInfoTitle}>10</Text>
+            <Text style={styles.userInfoTitle}>{posts.length}</Text>
             <Text style={styles.userInfoSubTitle}>Posts</Text>
           </View>
           <View style={styles.userInfoItem}>

@@ -82,7 +82,7 @@ export default HomeScreen = ({navigation}) => {
       const list = [];
       await firestore()
         .collection('Posts', 'desc')
-        .orderBy('postTime')
+        .orderBy('postTime','desc')
         .get()
         .then(querySnapshot => {
           // console.log('Total posts: ', querySnapshot.size);
@@ -128,7 +128,8 @@ export default HomeScreen = ({navigation}) => {
   useEffect(() => {
     fetchPosts();
     setDeleted(false);
-  }, [deleted]);
+    navigation.addListener('focus', () => setLoading(!loading)); //cho phép refresh lại screen khi có thay đổi
+  }, [deleted, navigation, loading]);
 
   const handleDelete = postId => {
     Alert.alert(

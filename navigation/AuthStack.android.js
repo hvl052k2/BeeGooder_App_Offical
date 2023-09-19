@@ -19,7 +19,7 @@ export default AuthStack = () => {
   useEffect(() => {
     AsyncStorage.getItem('alreadyLaunched').then(value => {
       if (value === null) {
-        AsyncStorage.setItem('alreadyLaunch', 'true');
+        AsyncStorage.setItem('alreadyLaunched', 'true');
         setIsFirstLaunch(true);
       } else {
         setIsFirstLaunch(false);

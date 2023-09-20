@@ -82,7 +82,7 @@ export default HomeScreen = ({navigation}) => {
       const list = [];
       await firestore()
         .collection('Posts', 'desc')
-        .orderBy('postTime','desc')
+        .orderBy('postTime', 'desc')
         .get()
         .then(querySnapshot => {
           // console.log('Total posts: ', querySnapshot.size);
@@ -203,6 +203,10 @@ export default HomeScreen = ({navigation}) => {
     return null;
   };
 
+  const listFooter = () => {
+    return null;
+  };
+
   return (
     <Container>
       {loading ? (
@@ -267,7 +271,7 @@ export default HomeScreen = ({navigation}) => {
           )}
           keyExtractor={item => item.id} // Mỗi item được phân biệt bởi id
           ListHeaderComponent={listHeader}
-          ListFooterComponent={listHeader}
+          ListFooterComponent={listFooter}
           showsVerticalScrollIndicator={false}
         />
       )}

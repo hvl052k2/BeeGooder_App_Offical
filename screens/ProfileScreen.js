@@ -8,6 +8,7 @@ import {
   Image,
   TouchableOpacity,
   Alert,
+  FlatList,
 } from 'react-native';
 import FormButton from '../components/FormButton';
 import {AuthContext} from '../navigation/AuthProvider.android';
@@ -15,8 +16,9 @@ import {Container} from '../styles/FeedStyles';
 import PostCard from '../components/PostCard';
 import firestore from '@react-native-firebase/firestore';
 import storage from '@react-native-firebase/storage';
-
+ 
 export default ProfileScreen = ({navigation, route}) => {
+  // console.log('route: ', route);
   const {user, logout} = useContext(AuthContext);
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -95,7 +97,6 @@ export default ProfileScreen = ({navigation, route}) => {
     fetchPosts();
     setDeleted(false);
     navigation.addListener('focus', () => setLoading(!loading)); //cho phép refresh lại screen khi có thay đổi
-    console.log('Refreshed');
   }, [deleted, navigation, loading]);
 
   const handleDelete = postId => {
@@ -191,14 +192,27 @@ export default ProfileScreen = ({navigation, route}) => {
         </Text>
         <View style={styles.userBtnWrapper}>
           {route.params ? (
-            <>
-              <TouchableOpacity style={styles.userBtn} onPress={() => {}}>
-                <Text style={styles.userBtnTxt}>Message</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.userBtn} onPress={() => {}}>
-                <Text style={styles.userBtnTxt}>Follow</Text>
-              </TouchableOpacity>
-            </>
+            route.params.userId == user.uid ? (
+              <>
+                <TouchableOpacity
+                  style={styles.userBtn}
+                  onPress={() => navigation.navigate('EditProfileScreen')}>
+                  <Text style={styles.userBtnTxt}>Edit</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.userBtn} onPress={logout}>
+                  <Text style={styles.userBtnTxt}>Logout</Text>
+                </TouchableOpacity>
+              </>
+            ) : (
+              <>
+                <TouchableOpacity style={styles.userBtn} onPress={() => {}}>
+                  <Text style={styles.userBtnTxt}>Message</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.userBtn} onPress={() => {}}>
+                  <Text style={styles.userBtnTxt}>Follow</Text>
+                </TouchableOpacity>
+              </>
+            )
           ) : (
             <>
               <TouchableOpacity
@@ -226,7 +240,6 @@ export default ProfileScreen = ({navigation, route}) => {
             <Text style={styles.userInfoSubTitle}>Following</Text>
           </View>
         </View>
-
         {posts.map(item => (
           <PostCard key={item.id} item={item} onDelete={handleDelete} />
         ))}

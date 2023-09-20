@@ -1,29 +1,40 @@
-import { Button, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import Icon from "react-native-vector-icons/Ionicons";
-import { windowHeight, windowWidth } from "../utils/Dimensions";
+import {Button, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import Icon from 'react-native-vector-icons/Ionicons';
+import {windowHeight, windowWidth} from '../utils/Dimensions';
 
-export default FormButton = ({buttonTitle, ...rest}) => {
+export default FormButton = ({buttonTitle, disabled, ...rest}) => {
   return (
-    <TouchableOpacity style = {styles.buttonContainer} {...rest}>
-        <Text style={styles.buttonText}>{buttonTitle}</Text>
+    <TouchableOpacity
+      style={[
+        styles.buttonContainer,
+        {backgroundColor: disabled ? '#2e64e5' : '#a5c9ca'},
+      ]}
+      disabled={disabled}
+      {...rest}>
+      <Text style={styles.buttonText}>{buttonTitle}</Text>
     </TouchableOpacity>
+    // <TouchableOpacity
+    //   style={styles.buttonContainer}
+    //   {...rest}>
+    //   <Text style={styles.buttonText}>{buttonTitle}</Text>
+    // </TouchableOpacity>
   );
 };
 
 const styles = StyleSheet.create({
   buttonContainer: {
     marginTop: 10,
-    width: "100%",
-    height: windowHeight/15,
-    backgroundColor: "#2e64e5",
+    width: '100%',
+    height: windowHeight / 15,
+    // backgroundColor: '#2e64e5',
     padding: 10,
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
     borderRadius: 15,
   },
   buttonText: {
     fontSize: 18,
-    fontWeight: "bold",
-    color: "#fff",
-  }
+    fontWeight: 'bold',
+    color: '#fff',
+  },
 });

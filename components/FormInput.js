@@ -2,6 +2,7 @@ import { Button, StyleSheet, Text, TextInput, View } from "react-native";
 import Icon from "react-native-vector-icons/Ionicons";
 import { windowHeight, windowWidth } from "../utils/Dimensions";
 
+
 export default FormInput = ({
   lableValue,
   placeHolderText,

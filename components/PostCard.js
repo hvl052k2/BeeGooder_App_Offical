@@ -106,7 +106,7 @@ const PostCard = ({item, onDelete, onPress}) => {
         />
       ) : (
         <Devider />
-      )}
+      )} 
       <InteractionWrapper>
         <Interaction active={item.liked}>
           <Icon name={likeIcon} size={25} color={likeIconColor} />

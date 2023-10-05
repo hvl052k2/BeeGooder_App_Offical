@@ -4,6 +4,14 @@ import {GoogleSignin} from '@react-native-google-signin/google-signin';
 import {LoginManager, AccessToken} from 'react-native-fbsdk-next';
 import firestore from '@react-native-firebase/firestore';
 import storage from '@react-native-firebase/storage';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Button,
+  Alert,
+  ActivityIndicator,
+} from 'react-native';
 
 export const AuthContext = createContext();
 
@@ -16,7 +24,19 @@ export const AuthProvider = ({children}) => {
         setUser,
         login: async (email, password) => {
           try {
-            await auth().signInWithEmailAndPassword(email, password);
+            await auth()
+              .signInWithEmailAndPassword(email, password)
+              .then(res => {
+                Alert.alert('Sign in successfully!');
+              })
+              .catch(err => {
+                if (err.code == 'auth/user-not-found') {
+                  Alert.alert('The login account does not exist.');
+                }
+                if (err.code == 'auth/wrong-password') {
+                  Alert.alert('The password is incorrect.');
+                }
+              });
           } catch (e) {
             console.log(e);
           }
@@ -86,9 +106,12 @@ export const AuthProvider = ({children}) => {
                       error,
                     );
                   });
+                Alert.alert("Sign up successfully!")
               })
               .catch(error => {
-                console.log('Something went wrong with sign up: ', error);
+                if(error.code === 'auth/email-already-in-use'){
+                  Alert.alert('This email address is already in use.');
+                }
               });
           } catch (e) {
             console.log(e);
@@ -99,6 +122,20 @@ export const AuthProvider = ({children}) => {
             await auth().signOut();
           } catch (e) {
             console.log(e);
+          }
+        },
+        forgetPassword: async email => {
+          try {
+            await auth()
+              .sendPasswordResetEmail(email)
+              .then(data => {
+                Alert.alert('Check your email');
+              })
+              .catch(err => {
+                console.log('Some thing went wrong with reset password: ', err);
+              });
+          } catch (e) {
+            console.log('Error in sending mail', e);
           }
         },
       }}>

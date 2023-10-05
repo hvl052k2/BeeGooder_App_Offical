@@ -3,12 +3,14 @@ import {createStackNavigator} from '@react-navigation/stack';
 import {useEffect, useState} from 'react';
 import Icon from 'react-native-vector-icons/Ionicons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import {GoogleSignin} from '@react-native-google-signin/google-signin';
 
 // import screens
 import LoginScreen from '../screens/LoginScreen';
 import SignupScreen from '../screens/SignupScreen';
 import OnboardingScreen from '../screens/OnboardingScreen';
+import ForgetPasswordScreen from '../screens/ForgetPasswordScreen';
+import OTPScreen from '../screens/OTPScreen';
 
 const Stack = createStackNavigator();
 
@@ -27,7 +29,8 @@ export default AuthStack = () => {
     });
 
     GoogleSignin.configure({
-      webClientId: '904803102717-e0qukf3a1v3v1gps4eisrsnk0ufjbpn0.apps.googleusercontent.com',
+      webClientId:
+        '904803102717-e0qukf3a1v3v1gps4eisrsnk0ufjbpn0.apps.googleusercontent.com',
     });
   }, []);
 
@@ -61,6 +64,51 @@ export default AuthStack = () => {
               <TouchableOpacity
                 style={styles.gobackButton}
                 onPress={() => navigation.navigate('Login')}>
+                <Icon name="arrow-back" size={35} color="#333" />
+              </TouchableOpacity>
+            );
+          },
+        })}
+      />
+      <Stack.Screen
+        name="OTP"
+        component={OTPScreen}
+        options={({navigation}) => ({
+          headerShown: true,
+          title: ' ',
+          headerStyle: {
+            backgroundColor: '#fff',
+            shadowColor: '#fff',
+            elevation: 0,
+          },
+          headerLeft: () => {
+            return (
+              <TouchableOpacity
+                style={styles.gobackButton}
+                onPress={() => navigation.goBack()}>
+                <Icon name="arrow-back" size={35} color="#333" />
+              </TouchableOpacity>
+            );
+          },
+        })}
+      />
+
+      <Stack.Screen
+        name="Forget"
+        component={ForgetPasswordScreen}
+        options={({navigation}) => ({
+          headerShown: true,
+          title: ' ',
+          headerStyle: {
+            backgroundColor: '#fff',
+            shadowColor: '#fff',
+            elevation: 0,
+          },
+          headerLeft: () => {
+            return (
+              <TouchableOpacity
+                style={styles.gobackButton}
+                onPress={() => navigation.goBack()}>
                 <Icon name="arrow-back" size={35} color="#333" />
               </TouchableOpacity>
             );

@@ -2,22 +2,16 @@ import {Button, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import {windowHeight, windowWidth} from '../utils/Dimensions';
 
-export default FormButton = ({buttonTitle, disabled, ...rest}) => {
+export default FormButton = ({buttonTitle, isValid, ...rest}) => {
   return (
     <TouchableOpacity
       style={[
         styles.buttonContainer,
-        {backgroundColor: disabled ? '#2e64e5' : '#a5c9ca'},
+        {backgroundColor: isValid ? '#2e64e5' : '#a5c9ca'},
       ]}
-      disabled={disabled}
       {...rest}>
       <Text style={styles.buttonText}>{buttonTitle}</Text>
     </TouchableOpacity>
-    // <TouchableOpacity
-    //   style={styles.buttonContainer}
-    //   {...rest}>
-    //   <Text style={styles.buttonText}>{buttonTitle}</Text>
-    // </TouchableOpacity>
   );
 };
 

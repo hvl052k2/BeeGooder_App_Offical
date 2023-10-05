@@ -146,35 +146,41 @@ const ProfileStack = ({navigation}) => (
 
 const AppStack = ({route}) => {
   const getTabBarVisibility = route => {
-    // const routeName = route.state
-    //   ? route.state.routes[route.state.index].name
-    //   : '';
     const routeName = getFocusedRouteNameFromRoute(route);
     if (
       routeName == 'ChatScreen' ||
       routeName == 'AddPostScreen' ||
       routeName == 'EditProfileScreen'
     ) {
-      // console.log(routeName);
       return false;
     }
-    // console.log(routeName);
     return true;
   };
   return (
     <Tab.Navigator
-      screenOptions={{
-        activeTintColor: '#2e64e5',
-      }}>
+      screenOptions={({route, navigation}) => ({
+        tabBarIcon: ({color, focused, size}) => {
+          let iconName;
+          if (route.name === 'Home') {
+            iconName = focused ? 'home' : 'home-outline';
+          } else if (route.name === 'Messages') {
+            iconName = focused
+              ? 'chatbox-ellipses'
+              : 'chatbox-ellipses-outline';
+          } else if (route.name === 'Profile') {
+            iconName = focused ? 'person' : 'person-outline';
+          }
+          return <Icon name={iconName} size={size} color={color} />;
+        },
+        tabBarActiveTintColor: '#2e64e5',
+        // tabBarInactiveTintColor: "gray"
+      })}>
       <Tab.Screen
         name="Home"
         component={FeedStack}
         options={({route}) => ({
           headerShown: false,
           tabBarLabel: 'Home',
-          tabBarIcon: ({color, size}) => (
-            <Icon name="home-outline" size={size} color={color} />
-          ),
           tabBarStyle: {display: getTabBarVisibility(route) ? 'flex' : 'none'},
         })}
       />
@@ -184,9 +190,6 @@ const AppStack = ({route}) => {
         component={MessageStack}
         options={({route}) => ({
           tabBarLabel: 'Messages',
-          tabBarIcon: ({color, size}) => (
-            <Icon name="chatbox-ellipses-outline" size={size} color={color} />
-          ),
           headerShown: false,
           tabBarStyle: {display: getTabBarVisibility(route) ? 'flex' : 'none'},
         })}
@@ -197,9 +200,6 @@ const AppStack = ({route}) => {
         component={ProfileStack}
         options={({route}) => ({
           tabBarLabel: 'Profile',
-          tabBarIcon: ({color, size}) => (
-            <Icon name="person-outline" size={size} color={color} />
-          ),
           headerShown: false,
           tabBarStyle: {display: getTabBarVisibility(route) ? 'flex' : 'none'},
         })}

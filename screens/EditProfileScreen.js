@@ -311,7 +311,7 @@ const EditProfileScreen = () => {
               style={styles.textInput}
             />
           </View>
-          <FormButton buttonTitle="Update" onPress={handleUpdate} />
+          <FormButton buttonTitle="Update" onPress={handleUpdate} isValid={true}/>
         </View>
       </View>
     </BottomSheetModalProvider>

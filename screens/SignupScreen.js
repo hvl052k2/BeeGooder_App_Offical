@@ -72,7 +72,7 @@ export default LoginScreen = ({navigation}) => {
             placeHolderText="Password"
             iconType="lock-closed-outline"
             autoCapitalize="none"
-            secureTextEntry={visible}>
+            secureTextEntry={!visible}>
             <View style={styles.iconStyle}>
               <Icon
                 name={visible ? 'eye-off-outline' : 'eye-outline'}
@@ -94,7 +94,7 @@ export default LoginScreen = ({navigation}) => {
             onBlur={() => setFieldTouched('confirmPassword')}
             placeHolderText="Confirm Password"
             iconType="lock-closed-outline"
-            secureTextEntry={visible}>
+            secureTextEntry={!visible}>
             <View style={styles.iconStyle}>
               <Icon
                 name={visible ? 'eye-off-outline' : 'eye-outline'}
@@ -112,7 +112,8 @@ export default LoginScreen = ({navigation}) => {
 
           <FormButton
             buttonTitle="Sign Up"
-            disabled={isValid}
+            disabled={!isValid}
+            isValid={isValid}
             onPress={handleSubmit}
           />
 
@@ -171,6 +172,7 @@ const styles = StyleSheet.create({
   },
   errorTxt: {
     color: 'red',
+    alignSelf: 'flex-start',
   },
   title: {
     fontSize: 40,

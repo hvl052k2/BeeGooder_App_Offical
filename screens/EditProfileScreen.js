@@ -29,6 +29,7 @@ const EditProfileScreen = () => {
   const [transferred, setTransferred] = useState(0);
   const [userData, setUserData] = useState(null);
   const [isOpen, setIsOpen] = useState(false);
+  const [isValid, setIsValid] = useState(false);
 
   const getUser = async () => {
     const currentUser = await firestore()
@@ -311,7 +312,11 @@ const EditProfileScreen = () => {
               style={styles.textInput}
             />
           </View>
-          <FormButton buttonTitle="Update" onPress={handleUpdate} isValid={true}/>
+          <FormButton
+            buttonTitle="Update"
+            onPress={handleUpdate}
+            isValid={true}
+          />
         </View>
       </View>
     </BottomSheetModalProvider>

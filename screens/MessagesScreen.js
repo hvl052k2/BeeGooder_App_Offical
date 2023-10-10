@@ -1,4 +1,11 @@
-import React, {useContext} from 'react';
+import React, {useContext, useState, useEffect} from 'react';
+import FormButton from '../components/FormButton';
+import {AuthContext} from '../navigation/AuthProvider.android';
+import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
+import firestore from '@react-native-firebase/firestore';
+import storage from '@react-native-firebase/storage';
+import ChatScreen from './ChatScreen';
+import {useIsFocused} from '@react-navigation/native';
 import {
   View,
   Text,
@@ -7,9 +14,7 @@ import {
   ScrollView,
   FlatList,
 } from 'react-native';
-import FormButton from '../components/FormButton';
-import {AuthContext} from '../navigation/AuthProvider.android';
-import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
+
 import {
   Container,
   Card,
@@ -22,76 +27,77 @@ import {
   PostTime,
   MessageText,
 } from '../styles/MessageStyles';
-import ChatScreen from './ChatScreen';
-
-const Messages = [
-  {
-    id: '1',
-    userName: 'Jenny Doe',
-    userImg: require('../assets/users/user-3.jpg'),
-    messageTime: '4 mins ago',
-    messageText:
-      'Hey there, this is my test for a post of my social app in React Native.',
-  },
-  {
-    id: '2',
-    userName: 'Lisa',
-    userImg: require('../assets/users/user-1.jpg'),
-    messageTime: '2 hours ago',
-    messageText:
-      'Hey there, this is my test for a post of my social app in React Native.',
-  },
-  {
-    id: '3',
-    userName: 'Ken William',
-    userImg: require('../assets/users/user-4.jpg'),
-    messageTime: '1 hours ago',
-    messageText:
-      'Hey there, this is my test for a post of my social app in React Native.',
-  },
-  {
-    id: '4',
-    userName: 'Selina Paul',
-    userImg: require('../assets/users/user-6.jpg'),
-    messageTime: '1 day ago',
-    messageText:
-      'Hey there, this is my test for a post of my social app in React Native.',
-  },
-  {
-    id: '5',
-    userName: 'Christy Alex',
-    userImg: require('../assets/users/user-7.jpg'),
-    messageTime: '2 days ago',
-    messageText:
-      'Hey there, this is my test for a post of my social app in React Native.',
-  },
-];
 
 export default MessagesScreen = ({navigation}) => {
+  const {user} = useContext(AuthContext);
+  const [messages, setMessages] = useState([]);
+
+  const isFocused = useIsFocused();
+
+  const fetchMessages = async () => {
+    try {
+      const list = [];
+      const querySnapshot = await firestore()
+        .collection('follows')
+        .doc(user.uid)
+        .collection('chateds')
+        .get();
+
+      for (const documentSnapshot of querySnapshot.docs) {
+        const userId = documentSnapshot.data().userId;
+        const snapShot = await firestore()
+          .collection('users')
+          .doc(userId)
+          .get();
+        const {fname, lname, userImg} = snapShot.data();
+
+        list.push({
+          userId: snapShot.id,
+          userName: fname ? `${fname} ${lname}` : 'New User',
+          userImg: userImg
+            ? userImg
+            : 'https://lh5.googleusercontent.com/-b0PKyNuQv5s/AAAAAAAAAAI/AAAAAAAAAAA/AMZuuclxAM4M1SCBGAO7Rp-QP6zgBEUkOQ/s96-c/photo.jpg',
+        });
+      }
+
+      setMessages(list);
+    } catch (error) {
+      console.error('Error fetching messages:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchMessages();
+  },[isFocused]);
+
   return (
     <Container>
       <FlatList
-        data={Messages}
+        data={messages}
         renderItem={({item}) => (
           <Card
             onPress={() =>
-              navigation.navigate('ChatScreen', {userName: item.userName})
+              navigation.navigate('ChatScreen', {
+                userId: item.userId,
+                userName: item.userName,
+              })
             }>
             <UserInfo>
               <UserImgWrapper>
-                <UserImg source={item.userImg} />
+                <UserImg source={{uri: item.userImg}} />
               </UserImgWrapper>
               <TextSection>
                 <UserInfoText>
-                  <UserName>{item.userName}</UserName>
-                  <PostTime>{item.messageTime}</PostTime>
+                  <UserName>{item.userName} </UserName>
+                  {/* <PostTime>{item.messageTime}</PostTime> */}
                 </UserInfoText>
-                <MessageText>{item.messageText}</MessageText>
+                {/* <MessageText>{item.messageText}</MessageText> */}
+                <MessageText>Hello my friend</MessageText>
               </TextSection>
             </UserInfo>
           </Card>
         )}
-        keyExtractor={item => item.id}
+        keyExtractor={item => item.userId}
       />
     </Container>
   );

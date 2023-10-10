@@ -30,11 +30,6 @@ export default HomeScreen = ({navigation}) => {
           // console.log('Total posts: ', querySnapshot.size);
 
           querySnapshot.forEach(documentSnapshot => {
-            // console.log(
-            //   'User ID: ',
-            //   documentSnapshot.id,
-            //   documentSnapshot.data(),
-            // );
             const {userId, post, postImg, postTime, likes, comments} =
               documentSnapshot.data();
             list.push({
@@ -207,6 +202,7 @@ export default HomeScreen = ({navigation}) => {
               onPress={() =>
                 navigation.navigate('HomeProfile', {
                   userId: item.userId,
+                  userName: item.userName,
                 })
               }
             />

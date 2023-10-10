@@ -1,4 +1,4 @@
-import React, {useState, useCallback, useEffect} from 'react';
+import React, {useState, useCallback, useEffect, useContext} from 'react';
 import {View, Text, StyleSheet} from 'react-native';
 import FormButton from '../components/FormButton';
 import {AuthContext} from '../navigation/AuthProvider.android';
@@ -6,38 +6,51 @@ import {Container} from '../styles/FeedStyles';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import {GiftedChat, Bubble, Send} from 'react-native-gifted-chat';
 import Icon from 'react-native-vector-icons/Ionicons';
+import firestore from '@react-native-firebase/firestore';
+import storage from '@react-native-firebase/storage';
+import moment from 'moment';
 
-export default ChatScreen = () => {
-  const [messages, setMessages] = useState([]);
+export default ChatScreen = ({route}) => {
+  const {user} = useContext(AuthContext);
+  const [messageList, setMessageList] = useState([]);
+
   useEffect(() => {
-    setMessages([
-      {
-        _id: 1,
-        text: 'Hello developer',
-        createdAt: new Date(),
-        user: {
-          _id: 2,
-          name: 'React Native',
-          avatar: require("../assets/users/user-1.jpg"),
-        },
-      },
-      {
-        _id: 2,
-        text: 'Hello world',
-        createdAt: new Date(),
-        user: {
-          _id: 1,
-          name: 'React Native',
-          avatar: require("../assets/users/user-2.jpg"),
-        },
-      },
-    ]);
+    const querySnapshot = firestore()
+      .collection('chats')
+      .doc(user.uid + route.params.userId)
+      .collection('messages')
+      .orderBy('createdAt', 'desc');
+    querySnapshot.onSnapshot(snapShot => {
+      const allMessages = snapShot.docs.map(snap => {
+        return {...snap.data(), createdAt: snap.data().createdAt.toDate()};
+      });
+      setMessageList(allMessages);
+    });
   }, []);
 
-  const onSend = useCallback((messages = []) => {
-    setMessages(previousMessages =>
-      GiftedChat.append(previousMessages, messages),
+  const onSend = useCallback(async (messages = []) => {
+    const msg = messages[0];
+    const myMsg = {
+      ...msg,
+      sendBy: user.uid,
+      sendTo: route.params.userId,
+      createdAt: new Date(),
+    };
+    setMessageList(previousMessages =>
+      GiftedChat.append(previousMessages, myMsg),
     );
+    
+    firestore()
+      .collection('chats')
+      .doc(user.uid + route.params.userId)
+      .collection('messages')
+      .add(myMsg);
+
+    firestore()
+      .collection('chats')
+      .doc(route.params.userId + user.uid)
+      .collection('messages')
+      .add(myMsg);
   }, []);
 
   const renderBubble = props => {
@@ -74,10 +87,10 @@ export default ChatScreen = () => {
 
   return (
     <GiftedChat
-      messages={messages}
+      messages={messageList}
       onSend={messages => onSend(messages)}
       user={{
-        _id: 1,
+        _id: user.uid,
       }}
       renderBubble={renderBubble}
       alwaysShowSend

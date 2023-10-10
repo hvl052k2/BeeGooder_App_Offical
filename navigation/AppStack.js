@@ -93,6 +93,16 @@ const FeedStack = ({navigation}) => (
         ),
       }}
     />
+
+    <Stack.Screen
+      name="Chat"
+      component={ChatScreen}
+      options={({route}) => ({
+        title: route.params.userName,
+        headerBackTitleVisible: false,
+        headerTitleAlign: 'center',
+      })}
+    />
   </Stack.Navigator>
 );
 
@@ -150,7 +160,8 @@ const AppStack = ({route}) => {
     if (
       routeName == 'ChatScreen' ||
       routeName == 'AddPostScreen' ||
-      routeName == 'EditProfileScreen'
+      routeName == 'EditProfileScreen' ||
+      routeName == 'Chat'
     ) {
       return false;
     }

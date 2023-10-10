@@ -16,14 +16,16 @@ import {Container} from '../styles/FeedStyles';
 import PostCard from '../components/PostCard';
 import firestore from '@react-native-firebase/firestore';
 import storage from '@react-native-firebase/storage';
- 
+import {useIsFocused} from '@react-navigation/native';
+
 export default ProfileScreen = ({navigation, route}) => {
-  // console.log('route: ', route);
   const {user, logout} = useContext(AuthContext);
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [deleted, setDeleted] = useState(false);
   const [userData, setUserData] = useState(null);
+  const [currentUserData, setCurrentUserData] = useState(null);
+  const isFocused = useIsFocused();
 
   const fetchPosts = async () => {
     try {
@@ -82,22 +84,85 @@ export default ProfileScreen = ({navigation, route}) => {
       });
   };
 
-  // useEffect(() => {
-  //   getUser();
-  //   fetchPosts();
-  //   navigation.addListener('focus', () => setLoading(!loading)); //cho phép refresh lại screen khi có thay đổi
-  // }, [navigation, loading]);
+  const getCurrentUser = async () => {
+    await firestore()
+      .collection('users')
+      .doc(user.uid)
+      .get()
+      .then(documentSnapshot => {
+        if (documentSnapshot.exists) {
+          // console.log('User Data: ', documentSnapshot.data());
+          setCurrentUserData(documentSnapshot.data());
+        }
+      });
+  };
 
-  // useEffect(() => {
-  //   fetchPosts();
-  // }, []);
+  const follow = async () => {
+    await firestore()
+      .collection('follows')
+      .doc(user.uid)
+      .collection('followings')
+      .add({
+        userId: route.params.userId,
+        // userName: userData.fname + ' ' + userData.lname,
+        // userImg: userData.userImg,
+      })
+      .then(res => {
+        console.log('followed successfully!');
+      })
+      .catch(err => {
+        console.error('Error adding follow: ', err);
+      });
+  };
+
+  const message = async () => {
+    await firestore()
+      .collection('follows')
+      .doc(user.uid)
+      .collection('chateds')
+      .add({
+        userId: route.params.userId,
+        userName: userData.fname
+          ? userData.fname + ' ' + userData.lname
+          : 'New User',
+        userImg: userData.userImg
+          ? userData.userImg
+          : 'https://lh5.googleusercontent.com/-b0PKyNuQv5s/AAAAAAAAAAI/AAAAAAAAAAA/AMZuuclxAM4M1SCBGAO7Rp-QP6zgBEUkOQ/s96-c/photo.jpg',
+      });
+
+    await firestore()
+      .collection('follows')
+      .doc(route.params.userId)
+      .collection('chateds')
+      .add({
+        userId: user.uid,
+        userName: currentUserData.fname
+          ? currentUserData.fname + ' ' + currentUserData.lname
+          : 'New User',
+        userImg: currentUserData.userImg
+          ? currentUserData.userImg
+          : 'https://lh5.googleusercontent.com/-b0PKyNuQv5s/AAAAAAAAAAI/AAAAAAAAAAA/AMZuuclxAM4M1SCBGAO7Rp-QP6zgBEUkOQ/s96-c/photo.jpg',
+      })
+      .then(res => {
+        console.log('add chateds successfully!');
+      })
+      .catch(err => {
+        console.error('Error adding chateds: ', err);
+      });
+  };
 
   useEffect(() => {
-    getUser();
     fetchPosts();
-    setDeleted(false);
-    navigation.addListener('focus', () => setLoading(!loading)); //cho phép refresh lại screen khi có thay đổi
-  }, [deleted, navigation, loading]);
+  }, []);
+
+  useEffect(() => {
+    navigation.addListener('focus', () => {
+      getUser();
+      fetchPosts();
+      getCurrentUser();
+      setDeleted(false);
+    }); //cho phép refresh lại screen khi có thay đổi
+  }, [deleted, navigation]);
 
   const handleDelete = postId => {
     Alert.alert(
@@ -186,7 +251,7 @@ export default ProfileScreen = ({navigation, route}) => {
           {userData ? userData.fname || 'Test' : 'Test'}{' '}
           {userData ? userData.lname || 'User' : 'User'}
         </Text>
-        {/* <Text>{route.params ? route.params.userId : user.uid}</Text> */}
+        <Text>{route.params ? route.params.userId : user.uid}</Text>
         <Text style={styles.aboutUser}>
           {userData ? userData.about || 'No details added.' : ''}
         </Text>
@@ -206,9 +271,23 @@ export default ProfileScreen = ({navigation, route}) => {
             ) : (
               <>
                 <TouchableOpacity style={styles.userBtn} onPress={() => {}}>
-                  <Text style={styles.userBtnTxt}>Message</Text>
+                  <Text
+                    style={styles.userBtnTxt}
+                    onPress={() => {
+                      message(),
+                        navigation.navigate('Chat', {
+                          userId: route.params.userId,
+                          userName: userData
+                            ? userData.fname
+                              ? userData.fname + ' ' + userData.lname
+                              : 'New User'
+                            : 'New User',
+                        });
+                    }}>
+                    Message
+                  </Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.userBtn} onPress={() => {}}>
+                <TouchableOpacity style={styles.userBtn} onPress={follow}>
                   <Text style={styles.userBtnTxt}>Follow</Text>
                 </TouchableOpacity>
               </>
@@ -244,6 +323,14 @@ export default ProfileScreen = ({navigation, route}) => {
           <PostCard key={item.id} item={item} onDelete={handleDelete} />
         ))}
       </ScrollView>
+      {/* <FlatList
+        data={posts}
+        renderItem={({item}) => (
+          <PostCard item={item} onDelete={handleDelete} />
+        )}
+        keyExtractor={item => item.id} // Mỗi item được phân biệt bởi id
+        showsVerticalScrollIndicator={false}
+      /> */}
     </SafeAreaView>
   );
 };

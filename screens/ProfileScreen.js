@@ -17,14 +17,19 @@ import PostCard from '../components/PostCard';
 import firestore from '@react-native-firebase/firestore';
 import storage from '@react-native-firebase/storage';
 import {useIsFocused} from '@react-navigation/native';
+import Icon from 'react-native-vector-icons/Ionicons';
+import {run} from 'jest';
 
-export default ProfileScreen = ({navigation, route}) => {
+export default ProfileScreen = React.memo(({navigation, route}) => {
   const {user, logout} = useContext(AuthContext);
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [deleted, setDeleted] = useState(false);
   const [userData, setUserData] = useState(null);
   const [currentUserData, setCurrentUserData] = useState(null);
+  const [following, setFollowing] = useState(0);
+  const [follower, setFollower] = useState(0);
+  const [isFollowed, setIsFollowed] = useState(null);
   const isFocused = useIsFocused();
 
   const fetchPosts = async () => {
@@ -102,16 +107,34 @@ export default ProfileScreen = ({navigation, route}) => {
       .collection('follows')
       .doc(user.uid)
       .collection('followings')
-      .add({
+      .doc(route.params.userId)
+      .set({
         userId: route.params.userId,
         // userName: userData.fname + ' ' + userData.lname,
         // userImg: userData.userImg,
       })
       .then(res => {
-        console.log('followed successfully!');
+        console.log('add following successfully!');
       })
       .catch(err => {
-        console.error('Error adding follow: ', err);
+        console.error('Error adding following: ', err);
+      });
+
+    await firestore()
+      .collection('follows')
+      .doc(route.params.userId)
+      .collection('followers')
+      .doc(user.uid)
+      .set({
+        userId: user.uid,
+        // userName: userData.fname + ' ' + userData.lname,
+        // userImg: userData.userImg,
+      })
+      .then(res => {
+        console.log('add follower successfully!');
+      })
+      .catch(err => {
+        console.error('Error adding follower: ', err);
       });
   };
 
@@ -120,7 +143,8 @@ export default ProfileScreen = ({navigation, route}) => {
       .collection('follows')
       .doc(user.uid)
       .collection('chateds')
-      .add({
+      .doc(route.params.userId)
+      .set({
         userId: route.params.userId,
         userName: userData.fname
           ? userData.fname + ' ' + userData.lname
@@ -134,7 +158,8 @@ export default ProfileScreen = ({navigation, route}) => {
       .collection('follows')
       .doc(route.params.userId)
       .collection('chateds')
-      .add({
+      .doc(user.uid)
+      .set({
         userId: user.uid,
         userName: currentUserData.fname
           ? currentUserData.fname + ' ' + currentUserData.lname
@@ -151,18 +176,35 @@ export default ProfileScreen = ({navigation, route}) => {
       });
   };
 
-  useEffect(() => {
-    fetchPosts();
-  }, []);
+  const getFollowings = async () => {
+    try {
+      await firestore()
+        .collection('follows')
+        .doc(route.params ? route.params.userId : user.uid)
+        .collection('followings')
+        .get()
+        .then(querySnapshot => {
+          setFollowing(querySnapshot.size);
+        });
+    } catch (error) {
+      console.error('Error getting following:', error);
+    }
+  };
 
-  useEffect(() => {
-    navigation.addListener('focus', () => {
-      getUser();
-      fetchPosts();
-      getCurrentUser();
-      setDeleted(false);
-    }); //cho phép refresh lại screen khi có thay đổi
-  }, [deleted, navigation]);
+  const getFollowers = async () => {
+    try {
+      await firestore()
+        .collection('follows')
+        .doc(route.params ? route.params.userId : user.uid)
+        .collection('followers')
+        .get()
+        .then(querySnapshot => {
+          setFollower(querySnapshot.size);
+        });
+    } catch (error) {
+      console.error('Error getting follower:', error);
+    }
+  };
 
   const handleDelete = postId => {
     Alert.alert(
@@ -201,36 +243,121 @@ export default ProfileScreen = ({navigation, route}) => {
               .delete()
               .then(() => {
                 console.log(`${postImg} has been deleted successfuly!`);
-                deleteFirestoreData(postId);
+                deleteFirestoreData('Posts', postId);
                 setDeleted(true);
               })
               .catch(e => {
                 console.log('Error while deleting the image: ', e);
               });
           } else {
-            deleteFirestoreData(postId);
+            deleteFirestoreData('Posts', postId);
             setDeleted(true);
           }
         }
       });
   };
 
-  const deleteFirestoreData = postId => {
+  const unFollow = () => {
+    // console.log('Current post id: ', postId);
     firestore()
-      .collection('Posts')
-      .doc(postId)
+      .collection('follows')
+      .doc(user.uid)
+      .collection('followings')
+      .doc(route.params.userId)
+      .get()
+      .then(documentSnapshot => {
+        if (documentSnapshot.exists) {
+          deleteFirestoreData_2_collection(
+            'follows',
+            'followings',
+            user.uid,
+            route.params.userId,
+          );
+        }
+      });
+
+    firestore()
+      .collection('follows')
+      .doc(route.params.userId)
+      .collection('followers')
+      .doc(user.uid)
+      .get()
+      .then(documentSnapshot => {
+        if (documentSnapshot.exists) {
+          deleteFirestoreData_2_collection(
+            'follows',
+            'followers',
+            route.params.userId,
+            user.uid,
+          );
+        }
+      });
+  };
+
+  const deleteFirestoreData = (nameCollection, userId) => {
+    firestore()
+      .collection(nameCollection)
+      .doc(userId)
       .delete()
       .then(() => {
-        console.log('Post deleted!');
+        console.log(`${nameCollection} deleted!`);
         Alert.alert(
-          'Post deleted!',
-          'Your post has been deleted successfully!',
+          `${nameCollection} deleted!`,
+          `Your ${nameCollection} has been deleted successfully!`,
         );
       })
       .catch(e => {
-        console.log('Error deleting post: ', e);
+        console.log(`Error deleting ${nameCollection}: `, e);
       });
   };
+
+  const deleteFirestoreData_2_collection = (
+    nameCollection1,
+    nameCollection2,
+    idDoc1,
+    idDoc2,
+  ) => {
+    firestore()
+      .collection(nameCollection1)
+      .doc(idDoc1)
+      .collection(nameCollection2)
+      .doc(idDoc2)
+      .delete()
+      .then(() => {
+        console.log(`${nameCollection2} deleted!`);
+      })
+      .catch(e => {
+        console.log(`Error deleting ${nameCollection2}: `, e);
+      });
+  };
+
+  const checkIsFollowed = () => {
+    if (route.params.followingList.includes(route.params.userId)) {
+      setIsFollowed(true);
+    } else {
+      setIsFollowed(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPosts();
+    getFollowings();
+    getFollowers();
+    if (route.params) {
+      checkIsFollowed();
+    }
+  }, []);
+
+  useEffect(() => {
+    getUser();
+    getCurrentUser();
+    setDeleted(false);
+    navigation.addListener('focus', () => {
+      fetchPosts();
+      getFollowings();
+      setLoading(!loading);
+    }); //cho phép refresh lại screen khi có thay đổi
+  }, [deleted, navigation, loading]);
 
   return (
     <SafeAreaView style={{flex: 1, backgroundColor: '#fff'}}>
@@ -287,8 +414,23 @@ export default ProfileScreen = ({navigation, route}) => {
                     Message
                   </Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.userBtn} onPress={follow}>
-                  <Text style={styles.userBtnTxt}>Follow</Text>
+
+                <TouchableOpacity
+                  style={styles.userBtn}
+                  onPress={() => {
+                    if (isFollowed) {
+                      unFollow();
+                      setIsFollowed(false);
+                    } else {
+                      follow();
+                      setIsFollowed(true);
+                    }
+                  }}>
+                  {isFollowed ? (
+                    <Icon name="people-outline" size={20} />
+                  ) : (
+                    <Text style={styles.userBtnTxt}>Follow</Text>
+                  )}
                 </TouchableOpacity>
               </>
             )
@@ -306,34 +448,49 @@ export default ProfileScreen = ({navigation, route}) => {
           )}
         </View>
         <View style={styles.userInfoWrapper}>
-          <View style={styles.userInfoItem}>
+          <TouchableOpacity style={styles.userInfoItem}>
             <Text style={styles.userInfoTitle}>{posts.length}</Text>
-            <Text style={styles.userInfoSubTitle}>Posts</Text>
-          </View>
-          <View style={styles.userInfoItem}>
-            <Text style={styles.userInfoTitle}>1M</Text>
-            <Text style={styles.userInfoSubTitle}>Followers</Text>
-          </View>
-          <View style={styles.userInfoItem}>
-            <Text style={styles.userInfoTitle}>100</Text>
-            <Text style={styles.userInfoSubTitle}>Following</Text>
-          </View>
+            <Text style={styles.userInfoSubTitle}>
+              {posts.length > 1 ? 'Posts' : 'Post'}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.userInfoItem}>
+            <Text style={styles.userInfoTitle}>{follower}</Text>
+            <Text style={styles.userInfoSubTitle}>
+              {follower > 1 ? 'Followers' : 'Follower'}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.userInfoItem}
+            onPress={() => {
+              if (route.params) {
+                navigation.navigate('FriendsFollowingsScreen', {
+                  userId: route.params.userId,
+                });
+              } else {
+                navigation.navigate('FollowingsScreen');
+              }
+            }}>
+            <Text style={styles.userInfoTitle}>{following}</Text>
+            <Text style={styles.userInfoSubTitle}>
+              {following > 1 ? 'Followings' : 'Following'}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.userInfoItem}>
+            <Text style={styles.userInfoTitle}>1B</Text>
+            <Text style={styles.userInfoSubTitle}>Liked</Text>
+          </TouchableOpacity>
         </View>
         {posts.map(item => (
           <PostCard key={item.id} item={item} onDelete={handleDelete} />
         ))}
       </ScrollView>
-      {/* <FlatList
-        data={posts}
-        renderItem={({item}) => (
-          <PostCard item={item} onDelete={handleDelete} />
-        )}
-        keyExtractor={item => item.id} // Mỗi item được phân biệt bởi id
-        showsVerticalScrollIndicator={false}
-      /> */}
     </SafeAreaView>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {

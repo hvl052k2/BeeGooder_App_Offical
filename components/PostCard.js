@@ -6,6 +6,18 @@ import ProgressiveImage from './ProgressiveImage';
 import firestore from '@react-native-firebase/firestore';
 
 import {
+  View,
+  Text,
+  StyleSheet,
+  SafeAreaView,
+  ScrollView,
+  Image,
+  TouchableOpacity,
+  Alert,
+  FlatList,
+} from 'react-native';
+
+import {
   Container,
   Card,
   UserImg,
@@ -20,7 +32,6 @@ import {
   InteractionText,
   Devider,
 } from '../styles/FeedStyles';
-import {TouchableOpacity} from 'react-native';
 
 const PostCard = ({item, onDelete, onPress}) => {
   const {user, logout} = useContext(AuthContext);
@@ -90,6 +101,9 @@ const PostCard = ({item, onDelete, onPress}) => {
           </TouchableOpacity>
           <PostTime>{moment(item.postTime.toDate()).fromNow()}</PostTime>
         </UserInfoText>
+        <View style={{position: 'absolute', right: 5, top: 5 }}>
+          <Icon name="bookmark-outline" size={25}/>
+        </View>
       </UserInfo>
       {item.post != null ? <PostText>{item.post}</PostText> : null}
       {/* {item.postImg != null ? (
@@ -106,7 +120,7 @@ const PostCard = ({item, onDelete, onPress}) => {
         />
       ) : (
         <Devider />
-      )} 
+      )}
       <InteractionWrapper>
         <Interaction active={item.liked}>
           <Icon name={likeIcon} size={25} color={likeIconColor} />

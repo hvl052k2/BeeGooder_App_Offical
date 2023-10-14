@@ -6,6 +6,7 @@ import {
   FlatList,
   Alert,
   ScrollView,
+  
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import PostCard from '../components/PostCard';
@@ -13,11 +14,36 @@ import {Container} from '../styles/FeedStyles';
 import firestore from '@react-native-firebase/firestore';
 import storage from '@react-native-firebase/storage';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
+import { AuthContext } from '../navigation/AuthProvider.android';
+import {useIsFocused} from '@react-navigation/native';
+
 
 export default HomeScreen = ({navigation}) => {
+  const {user, logout} = useContext(AuthContext);
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [deleted, setDeleted] = useState(false);
+  const [followingList, setFollowingList] = useState([]);
+
+  const isFocused = useIsFocused();
+
+  const getFollowingList = async () => {
+    try {
+      const list = [];
+      const querySnapshot = await firestore()
+        .collection('follows')
+        .doc(user.uid)
+        .collection('followings')
+        .get();
+
+      for (const documentSnapshot of querySnapshot.docs) {
+        list.push(documentSnapshot.data().userId);
+      }
+      setFollowingList(list);
+    } catch (error) {
+      console.error('Error fetching messages:', error);
+    }
+  };
 
   const fetchPosts = async () => {
     try {
@@ -60,7 +86,8 @@ export default HomeScreen = ({navigation}) => {
 
   useEffect(() => {
     fetchPosts();
-  }, []);
+    getFollowingList();
+  }, [isFocused]);
 
   useEffect(() => {
     fetchPosts();
@@ -90,7 +117,7 @@ export default HomeScreen = ({navigation}) => {
   };
 
   const deletePost = postId => {
-    console.log('Current post id: ', postId);
+    console.log('post id was deleted: ', postId);
     firestore()
       .collection('Posts')
       .doc(postId)
@@ -203,6 +230,7 @@ export default HomeScreen = ({navigation}) => {
                 navigation.navigate('HomeProfile', {
                   userId: item.userId,
                   userName: item.userName,
+                  followingList: followingList,
                 })
               }
             />

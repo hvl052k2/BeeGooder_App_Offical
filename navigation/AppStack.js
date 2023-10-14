@@ -12,6 +12,7 @@ import MessagesScreen from '../screens/MessagesScreen';
 import AddPostScreen from '../screens/AddPostScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import EditProfileScreen from '../screens/EditProfileScreen';
+import FollowingsScreen from '../screens/FollowingsScreen';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -103,10 +104,32 @@ const FeedStack = ({navigation}) => (
         headerTitleAlign: 'center',
       })}
     />
+
+    <Stack.Screen
+      name="FriendsFollowingsScreen"
+      component={FollowingsScreen}
+      options={{
+        title: 'Followings',
+        headerTitleAlign: 'center',
+        headerStyle: {
+          backgroundColor: '#fff',
+          shadowColor: '#fff',
+          elevation: 0,
+        },
+        headerBackTitleVisible: false,
+        headerBackImage: () => (
+          <TouchableOpacity
+            style={styles.gobackButton}
+            onPress={() => navigation.goBack()}>
+            <Icon name="arrow-back" size={30} color="#2e64e5" />
+          </TouchableOpacity>
+        ),
+      }}
+    />
   </Stack.Navigator>
 );
 
-const MessageStack = ({navigation}) => (
+const MessagesStack = ({navigation}) => (
   <Stack.Navigator>
     <Stack.Screen
       name="MessagesScreen"
@@ -137,22 +160,110 @@ const ProfileStack = ({navigation}) => (
         headerShown: false,
       }}
     />
+
     <Stack.Screen
       name="EditProfileScreen"
       component={EditProfileScreen}
       options={{
         headerTitle: 'Edit Profile',
-        headerBackTitleVisible: false,
         headerTitleAlign: 'center',
         headerStyle: {
           backgroundColor: '#fff',
           shadowColor: '#fff',
           elevation: 0,
         },
+        headerBackTitleVisible: false,
+        headerBackImage: () => (
+          <TouchableOpacity
+            style={styles.gobackButton}
+            onPress={() => navigation.navigate('ProfileScreen')}>
+            <Icon name="arrow-back" size={30} color="#2e64e5" />
+          </TouchableOpacity>
+        ),
+      }}
+    />
+
+    <Stack.Screen
+      name="FollowingsScreen"
+      component={FollowingsScreen}
+      options={{
+        title: 'Followings',
+        headerTitleAlign: 'center',
+        headerStyle: {
+          backgroundColor: '#fff',
+          shadowColor: '#fff',
+          elevation: 0,
+        },
+        headerBackTitleVisible: false,
+        headerBackImage: () => (
+          <TouchableOpacity
+            style={styles.gobackButton}
+            onPress={() => navigation.navigate('ProfileScreen')}>
+            <Icon name="arrow-back" size={30} color="#2e64e5" />
+          </TouchableOpacity>
+        ),
+      }}
+    />
+
+    <Stack.Screen
+      name="HomeProfile"
+      component={ProfileScreen}
+      options={{
+        title: '',
+        headerTitleAlign: 'center',
+        headerStyle: {
+          backgroundColor: '#fff',
+          shadowColor: '#fff',
+          elevation: 0,
+        },
+        headerBackTitleVisible: false,
+        headerBackImage: () => (
+          <TouchableOpacity
+            style={styles.gobackButton}
+            onPress={() => navigation.goBack()}>
+            <Icon name="arrow-back" size={30} color="#2e64e5" />
+          </TouchableOpacity>
+        ),
       }}
     />
   </Stack.Navigator>
 );
+
+// const FriendsStack = ({navigation}) => (
+//   <Stack.Navigator>
+//     <Stack.Screen
+//       name="FriendsScreen"
+//       component={FriendsScreen}
+//       options={{
+//         // headerShown: false,
+//         headerTitle: 'Friends',
+//         headerTitleAlign: 'center',
+//       }}
+//     />
+
+//     {/* <Stack.Screen
+//       name="FriendProfileScreen"
+//       component={ProfileScreen}
+//       options={{
+//         title: '',
+//         headerTitleAlign: 'center',
+//         headerStyle: {
+//           backgroundColor: '#fff',
+//           shadowColor: '#fff',
+//           elevation: 0,
+//         },
+//         headerBackTitleVisible: false,
+//         headerBackImage: () => (
+//           <TouchableOpacity
+//             style={styles.gobackButton}
+//             onPress={() => navigation.goBack()}>
+//             <Icon name="arrow-back" size={30} color="#2e64e5" />
+//           </TouchableOpacity>
+//         ),
+//       }}
+//     /> */}
+//   </Stack.Navigator>
+// );
 
 const AppStack = ({route}) => {
   const getTabBarVisibility = route => {
@@ -180,6 +291,8 @@ const AppStack = ({route}) => {
               : 'chatbox-ellipses-outline';
           } else if (route.name === 'Profile') {
             iconName = focused ? 'person' : 'person-outline';
+          } else if (route.name === 'Friends') {
+            iconName = focused ? 'people-circle-outline' : 'people-circle';
           }
           return <Icon name={iconName} size={size} color={color} />;
         },
@@ -190,15 +303,25 @@ const AppStack = ({route}) => {
         name="Home"
         component={FeedStack}
         options={({route}) => ({
-          headerShown: false,
           tabBarLabel: 'Home',
+          headerShown: false,
           tabBarStyle: {display: getTabBarVisibility(route) ? 'flex' : 'none'},
         })}
       />
 
+      {/* <Tab.Screen
+        name="Friends"
+        component={FriendsStack}
+        options={({route}) => ({
+          tabBarLabel: 'Friends',
+          headerShown: false,
+          tabBarStyle: {display: getTabBarVisibility(route) ? 'flex' : 'none'},
+        })}
+      /> */}
+
       <Tab.Screen
         name="Messages"
-        component={MessageStack}
+        component={MessagesStack}
         options={({route}) => ({
           tabBarLabel: 'Messages',
           headerShown: false,

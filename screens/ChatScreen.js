@@ -13,8 +13,45 @@ import moment from 'moment';
 export default ChatScreen = ({route}) => {
   const {user} = useContext(AuthContext);
   const [messageList, setMessageList] = useState([]);
+  const [userData, setUserData] = useState(null);
+  const [myData, setMyData] = useState(null);
 
-  useEffect(() => {
+  const getUserData = async () => {
+    await firestore()
+      .collection('users')
+      .doc(route.params.userId)
+      .get()
+      .then(documentSnapshot => {
+        if (documentSnapshot.exists) {
+          console.log('User Data: ', documentSnapshot.data());
+          setUserData(documentSnapshot.data());
+        }
+      });
+  };
+
+  const getMyData = async () => {
+    await firestore()
+      .collection('users')
+      .doc(user.uid)
+      .get()
+      .then(documentSnapshot => {
+        if (documentSnapshot.exists) {
+          console.log('My Data: ', documentSnapshot.data());
+          setMyData(documentSnapshot.data());
+        }
+      });
+  };
+
+  const findIndexFromEnd = (messageList, userId) => {
+    for (let i = messageList.length - 1; i >= 0; i--) {
+      if (messageList[i].sendBy === userId) {
+        return i;
+      }
+    }
+    return -1;
+  };
+
+  const fetchMessageList = () => {
     const querySnapshot = firestore()
       .collection('chats')
       .doc(user.uid + route.params.userId)
@@ -22,14 +59,32 @@ export default ChatScreen = ({route}) => {
       .orderBy('createdAt', 'desc');
     querySnapshot.onSnapshot(snapShot => {
       const allMessages = snapShot.docs.map(snap => {
-        return {...snap.data(), createdAt: snap.data().createdAt.toDate()};
+        return {
+          ...snap.data(),
+          createdAt: snap.data().createdAt.toDate(),
+        };
       });
+      if (allMessages.length != 0) {
+        index = findIndexFromEnd(allMessages, route.params.userId);
+        if (index != -1) {
+          allMessages[index].user.avatar =
+            'https://lh5.googleusercontent.com/-b0PKyNuQv5s/AAAAAAAAAAI/AAAAAAAAAAA/AMZuuclxAM4M1SCBGAO7Rp-QP6zgBEUkOQ/s96-c/photo.jpg';
+        }
+      }
+      console.log('allMessages: ', allMessages);
       setMessageList(allMessages);
     });
+  };
+
+  useEffect(() => {
+    fetchMessageList();
+    getUserData();
+    getMyData();
   }, []);
 
   const onSend = useCallback(async (messages = []) => {
     const msg = messages[0];
+    console.log('msg: ', msg);
     const myMsg = {
       ...msg,
       sendBy: user.uid,
@@ -39,7 +94,7 @@ export default ChatScreen = ({route}) => {
     setMessageList(previousMessages =>
       GiftedChat.append(previousMessages, myMsg),
     );
-    
+
     firestore()
       .collection('chats')
       .doc(user.uid + route.params.userId)
@@ -61,10 +116,16 @@ export default ChatScreen = ({route}) => {
           right: {
             backgroundColor: '#2e64e5',
           },
+          left: {
+            backgroundColor: '#f0f2f5',
+          },
         }}
         textStyle={{
           right: {
             color: '#fff',
+          },
+          left: {
+            color: '#000',
           },
         }}
       />
@@ -87,6 +148,7 @@ export default ChatScreen = ({route}) => {
 
   return (
     <GiftedChat
+      style={{backgroundColor: '#fff'}}
       messages={messageList}
       onSend={messages => onSend(messages)}
       user={{

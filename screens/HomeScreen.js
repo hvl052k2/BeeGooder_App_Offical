@@ -24,7 +24,6 @@ export default HomeScreen = ({navigation}) => {
   const [loading, setLoading] = useState(true);
   const [deleted, setDeleted] = useState(false);
   const [followingList, setFollowingList] = useState([]);
-
   const isFocused = useIsFocused();
 
   const getFollowingList = async () => {

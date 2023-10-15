@@ -1,4 +1,10 @@
-import React, {useContext, useState, useEffect} from 'react';
+import React, {
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+} from 'react';
 import {
   View,
   Text,
@@ -178,16 +184,19 @@ export default ProfileScreen = React.memo(({navigation, route}) => {
 
   const getFollowings = async () => {
     try {
-      await firestore()
+      const list = [];
+      const querySnapshot = await firestore()
         .collection('follows')
         .doc(route.params ? route.params.userId : user.uid)
         .collection('followings')
-        .get()
-        .then(querySnapshot => {
-          setFollowing(querySnapshot.size);
-        });
+        .get();
+
+      for (const documentSnapshot of querySnapshot.docs) {
+        list.push(documentSnapshot.data().userId);
+      }
+      setFollowing(list);
     } catch (error) {
-      console.error('Error getting following:', error);
+      console.error('Error fetching messages:', error);
     }
   };
 
@@ -350,13 +359,15 @@ export default ProfileScreen = React.memo(({navigation, route}) => {
 
   useEffect(() => {
     getUser();
+    fetchPosts();
     getCurrentUser();
-    setDeleted(false);
+    getFollowings();
+    getFollowers();
     navigation.addListener('focus', () => {
-      fetchPosts();
-      getFollowings();
+      // fetchPosts();
       setLoading(!loading);
     }); //cho phép refresh lại screen khi có thay đổi
+    setDeleted(false);
   }, [deleted, navigation, loading]);
 
   return (
@@ -388,7 +399,7 @@ export default ProfileScreen = React.memo(({navigation, route}) => {
               <>
                 <TouchableOpacity
                   style={styles.userBtn}
-                  onPress={() => navigation.navigate('EditProfileScreen')}>
+                  onPress={() => navigation.push('EditProfileScreen')}>
                   <Text style={styles.userBtnTxt}>Edit</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.userBtn} onPress={logout}>
@@ -448,14 +459,28 @@ export default ProfileScreen = React.memo(({navigation, route}) => {
           )}
         </View>
         <View style={styles.userInfoWrapper}>
-          <TouchableOpacity style={styles.userInfoItem}>
+          <TouchableOpacity style={styles.userInfoItem} disabled={true}>
             <Text style={styles.userInfoTitle}>{posts.length}</Text>
             <Text style={styles.userInfoSubTitle}>
               {posts.length > 1 ? 'Posts' : 'Post'}
             </Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.userInfoItem}>
+          <TouchableOpacity
+            style={styles.userInfoItem}
+            onPress={() => {
+              if (route.params) {
+                navigation.push('FriendsFollowersScreen', {
+                  userId: route.params.userId,
+                  followingList: following,
+                });
+              } else {
+                navigation.push('FollowersScreen', {
+                  userId: user.uid,
+                  followingList: following,
+                });
+              }
+            }}>
             <Text style={styles.userInfoTitle}>{follower}</Text>
             <Text style={styles.userInfoSubTitle}>
               {follower > 1 ? 'Followers' : 'Follower'}
@@ -466,16 +491,20 @@ export default ProfileScreen = React.memo(({navigation, route}) => {
             style={styles.userInfoItem}
             onPress={() => {
               if (route.params) {
-                navigation.navigate('FriendsFollowingsScreen', {
+                navigation.push('FriendsFollowingsScreen', {
                   userId: route.params.userId,
+                  followingList: following,
                 });
               } else {
-                navigation.navigate('FollowingsScreen');
+                navigation.push('FollowingsScreen', {
+                  userId: user.uid,
+                  followingList: following,
+                });
               }
             }}>
-            <Text style={styles.userInfoTitle}>{following}</Text>
+            <Text style={styles.userInfoTitle}>{following.length}</Text>
             <Text style={styles.userInfoSubTitle}>
-              {following > 1 ? 'Followings' : 'Following'}
+              {following.length > 1 ? 'Followings' : 'Following'}
             </Text>
           </TouchableOpacity>
 
@@ -485,7 +514,12 @@ export default ProfileScreen = React.memo(({navigation, route}) => {
           </TouchableOpacity>
         </View>
         {posts.map(item => (
-          <PostCard key={item.id} item={item} onDelete={handleDelete} />
+          <PostCard
+            key={item.id}
+            item={item}
+            currentUserData={currentUserData}
+            onDelete={handleDelete}
+          />
         ))}
       </ScrollView>
     </SafeAreaView>

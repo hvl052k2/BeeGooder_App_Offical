@@ -33,7 +33,7 @@ import {
   Devider,
 } from '../styles/FeedStyles';
 
-const PostCard = ({item, onDelete, onPress}) => {
+const PostCard = ({item, onDelete, onPress, currentUserData}) => {
   const {user, logout} = useContext(AuthContext);
   const [userData, setUserData] = useState(null);
 
@@ -72,7 +72,7 @@ const PostCard = ({item, onDelete, onPress}) => {
   useEffect(() => {
     getUser();
     // console.log(`Name of user: ${userData.fname} ${userData.lname}`);
-  }, []);
+  }, [currentUserData]);
 
   // useEffect(() => {
   //   getUser();
@@ -101,8 +101,8 @@ const PostCard = ({item, onDelete, onPress}) => {
           </TouchableOpacity>
           <PostTime>{moment(item.postTime.toDate()).fromNow()}</PostTime>
         </UserInfoText>
-        <View style={{position: 'absolute', right: 5, top: 5 }}>
-          <Icon name="bookmark-outline" size={25}/>
+        <View style={{position: 'absolute', right: 5, top: 5}}>
+          <Icon name="bookmark-outline" size={25} />
         </View>
       </UserInfo>
       {item.post != null ? <PostText>{item.post}</PostText> : null}

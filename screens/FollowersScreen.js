@@ -31,18 +31,19 @@ import {
   MessageText,
 } from '../styles/FollowStyles';
 
-export default FolowingsScreen = ({navigation, route}) => {
+export default FolowersScreen = ({navigation, route}) => {
   const {user} = useContext(AuthContext);
-  const [followings, setFollowings] = useState([]);
+  const [followers, setFollowers] = useState([]);
+
   const isFocused = useIsFocused();
 
-  const fetchFollowings = async () => {
+  const fetchFollowers = async () => {
     try {
       const list = [];
       const querySnapshot = await firestore()
         .collection('follows')
         .doc(route.params ? route.params.userId : user.uid)
-        .collection('followings')
+        .collection('followers')
         .get();
 
       for (const documentSnapshot of querySnapshot.docs) {
@@ -61,7 +62,8 @@ export default FolowingsScreen = ({navigation, route}) => {
             : 'https://lh5.googleusercontent.com/-b0PKyNuQv5s/AAAAAAAAAAI/AAAAAAAAAAA/AMZuuclxAM4M1SCBGAO7Rp-QP6zgBEUkOQ/s96-c/photo.jpg',
         });
       }
-      setFollowings(list);
+
+      setFollowers(list);
     } catch (error) {
       console.error('Error fetching messages:', error);
     }
@@ -72,14 +74,14 @@ export default FolowingsScreen = ({navigation, route}) => {
   // }, [isFocused]);
 
   useEffect(() => {
-    fetchFollowings();
+    fetchFollowers();
   }, []);
 
   // console.log("route",route)
   return (
     <Container>
       <FlatList
-        data={followings}
+        data={followers}
         renderItem={({item}) => (
           <Card
             onPress={() =>

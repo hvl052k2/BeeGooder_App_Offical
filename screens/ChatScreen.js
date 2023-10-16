@@ -27,13 +27,8 @@ import ImagePicker from 'react-native-image-crop-picker';
 export default ChatScreen = ({route}) => {
   const {user} = useContext(AuthContext);
   const [messageList, setMessageList] = useState([]);
-  const [userData, setUserData] = useState(null);
-  const [myData, setMyData] = useState(null);
-  const [image, setImage] = useState(null);
-  const [imageUrl, setImageUrl] = useState(null);
-  const [uploading, setUploading] = useState(false);
-  const [transferred, setTransferred] = useState(0);
-  const [post, setPost] = useState(null);
+  const [imageData, setImageData] = useState(null);
+  const [imageUrl, setImageUrl] = useState('');
 
   const takePhotoFromCamera = () => {
     ImagePicker.openCamera({
@@ -41,9 +36,10 @@ export default ChatScreen = ({route}) => {
       height: 780,
       cropping: true,
     }).then(image => {
-      console.log(image);
       const imageUri = Platform.OS == 'ios' ? image.sourceURL : image.path;
-      setImage(imageUri);
+      console.log('imageUri: ', imageUri);
+      setImageData(imageUri);
+      uploadImage(imageUri);
     });
   };
 
@@ -53,78 +49,28 @@ export default ChatScreen = ({route}) => {
       height: 780,
       cropping: true,
     }).then(image => {
-      console.log(image);
       const imageUri = Platform.OS == 'ios' ? image.sourceURL : image.path;
-      setImage(imageUri);
+      setImageData(imageUri);
+      uploadImage(imageUri);
     });
   };
 
-  const uploadImage = async () => {
-    if (image == null) {
-      return null;
-    }
-    const uploadUri = image;
+  const uploadImage = async imageUri => {
+    const uploadUri = imageUri;
     let filename = 'IMG_' + uploadUri.substring(uploadUri.lastIndexOf('-') + 1);
-
-    //Add timestamp to File Name
-    // const extension = filename.split(".").prop();
-    // const name = filename.split(".").slice(0, -1).join(".");
-    // filename = name + Date.now() + "." + extension;
-
-    setUploading(true);
-    setTransferred(0);
 
     // Set transferred state
     const storageRef = storage().ref(`photos/${filename}`);
     const task = storageRef.putFile(uploadUri);
-    task.on('state_changed', taskSnapshot => {
-      console.log(
-        `${taskSnapshot.bytesTransferred} transferred out of ${taskSnapshot.totalBytes}`,
-      );
-      setTransferred(
-        Math.round(taskSnapshot.bytesTransferred / taskSnapshot.totalBytes) *
-          100,
-      );
-    });
 
     try {
       await task;
       const url = await storageRef.getDownloadURL();
-      // setImageUrl(url);
-      setUploading(false);
-      setImage(null);
-      return url;
+      setImageUrl(url);
     } catch (e) {
       console.log(e);
-      return null;
     }
   };
-
-  const getUserData = useCallback(async () => {
-    await firestore()
-      .collection('users')
-      .doc(route.params.userId)
-      .get()
-      .then(documentSnapshot => {
-        if (documentSnapshot.exists) {
-          console.log('User Data: ', documentSnapshot.data());
-          setUserData(documentSnapshot.data());
-        }
-      });
-  }, []);
-
-  const getMyData = useCallback(async () => {
-    await firestore()
-      .collection('users')
-      .doc(user.uid)
-      .get()
-      .then(documentSnapshot => {
-        if (documentSnapshot.exists) {
-          console.log('My Data: ', documentSnapshot.data());
-          setMyData(documentSnapshot.data());
-        }
-      });
-  }, []);
 
   const fetchMessageList = () => {
     const querySnapshot = firestore()
@@ -154,15 +100,14 @@ export default ChatScreen = ({route}) => {
     fetchMessageList();
   }, []);
 
-  const onSend = useCallback(async (messages = []) => {
-    // const url = uploadImage();
+  const onSend = async (messages = []) => {
     const msg = messages[0];
     const myMsg = {
       ...msg,
       sendBy: user.uid,
       sendTo: route.params.userId,
       createdAt: new Date(),
-      // image: url,
+      image: imageUrl,
     };
     setMessageList(previousMessages =>
       GiftedChat.append(previousMessages, myMsg),
@@ -179,7 +124,9 @@ export default ChatScreen = ({route}) => {
       .doc(route.params.userId + user.uid)
       .collection('messages')
       .add(myMsg);
-  }, []);
+    setImageUrl('');
+    setImageData(null);
+  };
 
   const renderBubble = props => {
     return (
@@ -208,15 +155,53 @@ export default ChatScreen = ({route}) => {
   const renderSend = props => {
     return (
       <View style={{marginBottom: 0, marginRight: 10, flexDirection: 'row'}}>
-        <TouchableOpacity>
-          <Icon name="camera-outline" size={25} style={{marginStart: 10, marginTop: 8}} />
-        </TouchableOpacity>
-        <TouchableOpacity>
-          <Icon name="image-outline" size={25} style={{marginStart: 10, marginTop: 8}} />
-        </TouchableOpacity>
-        <TouchableOpacity>
-          <Icon name="mic-outline" size={25} style={{marginStart: 10, marginTop: 8}} />
-        </TouchableOpacity>
+        {imageUrl != '' ? (
+          <>
+            <View
+              style={{
+                width: 40,
+                height: 40,
+                borderRadius: 10,
+                backgroundColor: '#fff',
+                marginRight: 10,
+              }}>
+              <Image
+                source={{uri: imageUrl}}
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 10,
+                  position: 'absolute',
+                }}
+              />
+            </View>
+          </>
+        ) : (
+          <>
+            <TouchableOpacity onPress={takePhotoFromCamera}>
+              <Icon
+                name="camera-outline"
+                size={25}
+                style={{marginStart: 10, marginTop: 8}}
+              />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={choosePhotoFromLibrary}>
+              <Icon
+                name="image-outline"
+                size={25}
+                style={{marginStart: 10, marginTop: 8}}
+              />
+            </TouchableOpacity>
+            <TouchableOpacity>
+              <Icon
+                name="mic-outline"
+                size={25}
+                style={{marginStart: 10, marginTop: 8}}
+              />
+            </TouchableOpacity>
+          </>
+        )}
+
         <Send {...props}>
           <Icon
             name="send"
@@ -258,15 +243,6 @@ export default ChatScreen = ({route}) => {
             style={{marginStart: 10}}
           />
         </TouchableOpacity>
-        {/* <TouchableOpacity>
-          <Icon name="camera-outline" size={28} style={{marginStart: 10}} />
-        </TouchableOpacity>
-        <TouchableOpacity>
-          <Icon name="image-outline" size={28} style={{marginStart: 10}} />
-        </TouchableOpacity>
-        <TouchableOpacity>
-          <Icon name="mic-outline" size={28} style={{marginStart: 10}} />
-        </TouchableOpacity> */}
       </View>
     );
   }, []);

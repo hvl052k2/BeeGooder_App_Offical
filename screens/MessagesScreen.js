@@ -80,6 +80,7 @@ export default MessagesScreen = ({navigation}) => {
               navigation.navigate('ChatScreen', {
                 userId: item.userId,
                 userName: item.userName,
+                userImg: item.userImg,
               })
             }>
             <UserInfo>

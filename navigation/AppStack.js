@@ -1,5 +1,5 @@
 import React from 'react';
-import {View, StyleSheet, TouchableOpacity, Text} from 'react-native';
+import {View, StyleSheet, TouchableOpacity, Text, Image} from 'react-native';
 import {createStackNavigator} from '@react-navigation/stack';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -86,13 +86,13 @@ const FeedStack = ({navigation}) => (
           elevation: 0,
         },
         headerBackTitleVisible: false,
-        headerBackImage: () => (
-          <TouchableOpacity
-            style={styles.gobackButton}
-            onPress={() => navigation.goBack()}>
-            <Icon name="arrow-back" size={30} color="#2e64e5" />
-          </TouchableOpacity>
-        ),
+        // headerBackImage: () => (
+        //   <TouchableOpacity
+        //     style={styles.gobackButton}
+        //     onPress={() => navigation.goBack()}>
+        //     <Icon name="arrow-back" size={30} color="#2e64e5" />
+        //   </TouchableOpacity>
+        // ),
       }}
     />
 
@@ -100,9 +100,34 @@ const FeedStack = ({navigation}) => (
       name="Chat"
       component={ChatScreen}
       options={({route}) => ({
-        title: route.params.userName,
+        headerTitleStyle: {
+          flexDirection: 'row',
+          alignItems: 'center',
+        },
+        headerStyle: {
+          backgroundColor: '#fff',
+          shadowColor: '#000',
+          elevation: 5
+        },
+        headerTitleAlign: 'left',
         headerBackTitleVisible: false,
-        headerTitleAlign: 'center',
+        headerTitle: props => (
+          <View {...props}>
+            <Image
+              style={{width: 40, height: 40, borderRadius: 50}}
+              source={{uri: route.params.userImg}}
+            />
+            <Text
+              style={{
+                fontSize: 15,
+                color: '#000',
+                marginLeft: 10,
+                fontWeight: 'bold',
+              }}>
+              {route.params.userName}
+            </Text>
+          </View>
+        ),
       })}
     />
 
@@ -118,13 +143,13 @@ const FeedStack = ({navigation}) => (
           elevation: 0,
         },
         headerBackTitleVisible: false,
-        headerBackImage: () => (
-          <TouchableOpacity
-            style={styles.gobackButton}
-            onPress={() => navigation.goBack()}>
-            <Icon name="arrow-back" size={30} color="#2e64e5" />
-          </TouchableOpacity>
-        ),
+        // headerBackImage: () => (
+        //   <TouchableOpacity
+        //     style={styles.gobackButton}
+        //     onPress={() => navigation.goBack()}>
+        //     <Icon name="arrow-back" size={30} color="#2e64e5" />
+        //   </TouchableOpacity>
+        // ),
       }}
     />
 
@@ -140,13 +165,13 @@ const FeedStack = ({navigation}) => (
           elevation: 0,
         },
         headerBackTitleVisible: false,
-        headerBackImage: () => (
-          <TouchableOpacity
-            style={styles.gobackButton}
-            onPress={() => navigation.goBack()}>
-            <Icon name="arrow-back" size={30} color="#2e64e5" />
-          </TouchableOpacity>
-        ),
+        // headerBackImage: () => (
+        //   <TouchableOpacity
+        //     style={styles.gobackButton}
+        //     onPress={() => navigation.goBack()}>
+        //     <Icon name="arrow-back" size={30} color="#2e64e5" />
+        //   </TouchableOpacity>
+        // ),
       }}
     />
   </Stack.Navigator>
@@ -166,9 +191,57 @@ const MessagesStack = ({navigation}) => (
       name="ChatScreen"
       component={ChatScreen}
       options={({route}) => ({
-        title: route.params.userName,
+        headerTitleStyle: {
+          flexDirection: 'row',
+          alignItems: 'center',
+        },
+        headerStyle: {
+          backgroundColor: '#fff',
+          shadowColor: '#000',
+          elevation: 5
+        },
+        headerTitleAlign: 'left',
         headerBackTitleVisible: false,
-        headerTitleAlign: 'center',
+        headerTitle: props => (
+          <View {...props}>
+            <Image
+              style={{width: 40, height: 40, borderRadius: 50}}
+              source={{uri: route.params.userImg}}
+            />
+            <Text
+              style={{
+                fontSize: 15,
+                color: '#000',
+                marginLeft: 10,
+                fontWeight: 'bold',
+                
+              }}>
+              {route.params.userName}
+            </Text>
+          </View>
+        ),
+        headerRight: () => (
+          <View style={{flexDirection: 'row'}}>
+            <TouchableOpacity>
+              <Icon
+                name="call"
+                size={30}
+                backgroundColor="#fff"
+                color="#2e64e5"
+                style={{marginRight: 20, backgroundColor: 'transparent'}}
+              />
+            </TouchableOpacity>
+            <TouchableOpacity>
+              <Icon
+                name="videocam"
+                size={30}
+                backgroundColor="#fff"
+                color="#2e64e5"
+                style={{marginRight: 20, backgroundColor: 'transparent'}}
+              />
+            </TouchableOpacity>
+          </View>
+        ),
       })}
     />
   </Stack.Navigator>

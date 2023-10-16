@@ -420,6 +420,9 @@ export default ProfileScreen = React.memo(({navigation, route}) => {
                               ? userData.fname + ' ' + userData.lname
                               : 'New User'
                             : 'New User',
+                          userImg: userData.userImg
+                            ? userData.userImg
+                            : 'https://lh5.googleusercontent.com/-b0PKyNuQv5s/AAAAAAAAAAI/AAAAAAAAAAA/AMZuuclxAM4M1SCBGAO7Rp-QP6zgBEUkOQ/s96-c/photo.jpg',
                         });
                     }}>
                     Message

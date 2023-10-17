@@ -29,30 +29,82 @@ export default ChatScreen = ({route}) => {
   const [messageList, setMessageList] = useState([]);
   const [imageData, setImageData] = useState(null);
   const [imageUrl, setImageUrl] = useState('');
+  const [isOpenActions, setIsOpenActions] = useState(false);
 
   const takePhotoFromCamera = () => {
+    setIsOpenActions(false);
+
     ImagePicker.openCamera({
-      width: 1200,
-      height: 780,
+      // width: 1200,
+      // height: 780,
       cropping: true,
-    }).then(image => {
-      const imageUri = Platform.OS == 'ios' ? image.sourceURL : image.path;
-      console.log('imageUri: ', imageUri);
-      setImageData(imageUri);
-      uploadImage(imageUri);
-    });
+    })
+      .then(image => {
+        const imageUri = Platform.OS == 'ios' ? image.sourceURL : image.path;
+        console.log('imageUri: ', imageUri);
+        setImageData(imageUri);
+        uploadImage(imageUri);
+      })
+      .catch(error => {
+        if (error.code === 'E_PICKER_CANCELLED') {
+          return false;
+        }
+      });
   };
 
   const choosePhotoFromLibrary = () => {
+    setIsOpenActions(false);
     ImagePicker.openPicker({
-      width: 1200,
-      height: 780,
+      // width: 1200,
+      // height: 780,
       cropping: true,
-    }).then(image => {
-      const imageUri = Platform.OS == 'ios' ? image.sourceURL : image.path;
-      setImageData(imageUri);
-      uploadImage(imageUri);
-    });
+    })
+      .then(image => {
+        const imageUri = Platform.OS == 'ios' ? image.sourceURL : image.path;
+        console.log('imageUri: ', imageUri);
+        setImageData(imageUri);
+        uploadImage(imageUri);
+      })
+      .catch(error => {
+        if (error.code === 'E_PICKER_CANCELLED') {
+          return false;
+        }
+      });
+  };
+
+  // const takeVideoFromCamera = () => {
+  //   ImagePicker.openPicker({
+  //     // width: 1200,
+  //     // height: 780,
+  //     mediaType: 'video',
+  //     // cropping: true,
+  //   }).then(image => {
+  //     const imageUri = Platform.OS == 'ios' ? image.sourceURL : image.path;
+  //     console.log('imageUri: ', imageUri);
+  //     setImageData(imageUri);
+  //     uploadImage(imageUri);
+  //   });
+  // };
+
+  const chooseVideoFromLibrary = () => {
+    setIsOpenActions(false);
+    ImagePicker.openPicker({
+      // width: 1200,
+      // height: 780,
+      // cropping: true,
+      mediaType: 'video',
+    })
+      .then(image => {
+        const imageUri = Platform.OS == 'ios' ? image.sourceURL : image.path;
+        console.log('imageUri: ', imageUri);
+        setImageData(imageUri);
+        uploadImage(imageUri);
+      })
+      .catch(error => {
+        if (error.code === 'E_PICKER_CANCELLED') {
+          return false;
+        }
+      });
   };
 
   const uploadImage = async imageUri => {
@@ -159,35 +211,54 @@ export default ChatScreen = ({route}) => {
           <>
             <View
               style={{
-                width: 40,
-                height: 40,
+                width: 45,
+                height: 45,
                 borderRadius: 10,
                 backgroundColor: '#fff',
-                marginRight: 10,
+                marginRight: 15,
+                // position: 'absolute',
+                // top: -205,
+                // right: 100
               }}>
               <Image
                 source={{uri: imageUrl}}
                 style={{
-                  width: 40,
-                  height: 40,
+                  width: 45,
+                  height: 45,
                   borderRadius: 10,
                   position: 'absolute',
                 }}
               />
+              <TouchableOpacity>
+                <Icon
+                  name="close-circle-outline"
+                  size={22}
+                  style={{
+                    marginStart: 10,
+                    marginTop: 8,
+                    position: 'absolute',
+                    right: -20,
+                    top: -10,
+                  }}
+                  onPress={() => {
+                    setImageUrl('');
+                  }}
+                />
+              </TouchableOpacity>
             </View>
-          </>
-        ) : (
-          <>
-            <TouchableOpacity onPress={takePhotoFromCamera}>
+            <TouchableOpacity>
               <Icon
-                name="camera-outline"
+                name="happy-outline"
                 size={25}
                 style={{marginStart: 10, marginTop: 8}}
               />
             </TouchableOpacity>
-            <TouchableOpacity onPress={choosePhotoFromLibrary}>
+          </>
+        ) : (
+          <>
+            <TouchableOpacity>
               <Icon
-                name="image-outline"
+                name="happy-outline"
                 size={25}
                 style={{marginStart: 10, marginTop: 8}}
               />
@@ -232,10 +303,59 @@ export default ChatScreen = ({route}) => {
     );
   };
 
-  const renderActions = useCallback(() => {
+  const renderActions = () => {
     return (
-      <View style={{marginBottom: 8, flexDirection: 'row'}}>
-        <TouchableOpacity>
+      <View style={{marginBottom: 8}}>
+        {isOpenActions ? (
+          <View
+            style={{
+              width: 100,
+              height: 110,
+              borderWidth: 0.5,
+              borderRadius: 10,
+              position: 'absolute',
+              backgroundColor: '#fff',
+              top: -125,
+              left: 10,
+            }}>
+            <TouchableOpacity
+              onPress={takePhotoFromCamera}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                // backgroundColor: 'pink',
+                padding: 5,
+                borderTopRightRadius: 10,
+                borderTopLeftRadius: 10,
+              }}>
+              <Icon name="camera-outline" size={25} style={{marginRight: 5}} />
+              <Text>Camera</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={choosePhotoFromLibrary}
+              style={{flexDirection: 'row', alignItems: 'center', padding: 5}}>
+              <Icon name="image-outline" size={25} style={{marginRight: 5}} />
+              <Text>Gallery</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={()=>{console.log('choose file clicked!')}}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                // backgroundColor: 'yellow',
+                padding: 5,
+                borderBottomRightRadius: 10,
+                borderBottomLeftRadius: 10,
+              }}>
+              <Icon name="attach-outline" size={25} style={{marginRight: 5}} />
+              <Text>File</Text>
+            </TouchableOpacity>
+          </View>
+        ) : null}
+        <TouchableOpacity
+          onPress={() => {
+            setIsOpenActions(!isOpenActions);
+          }}>
           <Icon
             name="add-circle-outline"
             size={28}
@@ -245,7 +365,7 @@ export default ChatScreen = ({route}) => {
         </TouchableOpacity>
       </View>
     );
-  }, []);
+  };
 
   return (
     <View style={styles.container}>
@@ -260,6 +380,7 @@ export default ChatScreen = ({route}) => {
         renderSend={renderSend}
         scrollToBottom
         scrollToBottomComponent={scrollToBottomComponent}
+        renderActions={renderActions}
         textInputStyle={{
           // borderWidth: 0.5,
           // borderColor: 'gray',
@@ -269,7 +390,7 @@ export default ChatScreen = ({route}) => {
           backgroundColor: '#fff',
         }}
         renderInputToolbar={renderInputToolbar}
-        renderActions={renderActions}
+        // renderActions={renderActions}
       />
     </View>
   );

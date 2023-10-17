@@ -1,4 +1,10 @@
-import React, {useState, useCallback, useEffect, useContext} from 'react';
+import React, {
+  useState,
+  useCallback,
+  useEffect,
+  useContext,
+  useRef,
+} from 'react';
 import {
   View,
   Text,
@@ -7,6 +13,7 @@ import {
   Image,
   TextInput,
 } from 'react-native';
+import Clipboard, {useClipboard} from '@react-native-clipboard/clipboard';
 import FormButton from '../components/FormButton';
 import {AuthContext} from '../navigation/AuthProvider.android';
 import {Container} from '../styles/FeedStyles';
@@ -23,6 +30,9 @@ import firestore from '@react-native-firebase/firestore';
 import storage from '@react-native-firebase/storage';
 import moment from 'moment';
 import ImagePicker from 'react-native-image-crop-picker';
+// import EmojiSelector, {Categories} from 'react-native-emoji-selector';
+import EmojiPicker, {emojiFromUtf16} from 'rn-emoji-picker';
+import {emojis} from 'rn-emoji-picker/dist/data';
 
 export default ChatScreen = ({route}) => {
   const {user} = useContext(AuthContext);
@@ -30,6 +40,12 @@ export default ChatScreen = ({route}) => {
   const [imageData, setImageData] = useState(null);
   const [imageUrl, setImageUrl] = useState('');
   const [isOpenActions, setIsOpenActions] = useState(false);
+  const [isOpenEmojiPicker, setIsOpenEmojiPicker] = useState(false);
+  const [recent, setRecent] = useState([]);
+  const [textInput, setTextInput] = useState('');
+  const [deletedMessage, setDeletedMessage] = useState(false);
+
+  const inputRef = useRef();
 
   const takePhotoFromCamera = () => {
     setIsOpenActions(false);
@@ -86,26 +102,26 @@ export default ChatScreen = ({route}) => {
   //   });
   // };
 
-  const chooseVideoFromLibrary = () => {
-    setIsOpenActions(false);
-    ImagePicker.openPicker({
-      // width: 1200,
-      // height: 780,
-      // cropping: true,
-      mediaType: 'video',
-    })
-      .then(image => {
-        const imageUri = Platform.OS == 'ios' ? image.sourceURL : image.path;
-        console.log('imageUri: ', imageUri);
-        setImageData(imageUri);
-        uploadImage(imageUri);
-      })
-      .catch(error => {
-        if (error.code === 'E_PICKER_CANCELLED') {
-          return false;
-        }
-      });
-  };
+  // const chooseVideoFromLibrary = () => {
+  //   setIsOpenActions(false);
+  //   ImagePicker.openPicker({
+  //     // width: 1200,
+  //     // height: 780,
+  //     // cropping: true,
+  //     mediaType: 'video',
+  //   })
+  //     .then(image => {
+  //       const imageUri = Platform.OS == 'ios' ? image.sourceURL : image.path;
+  //       console.log('imageUri: ', imageUri);
+  //       setImageData(imageUri);
+  //       uploadImage(imageUri);
+  //     })
+  //     .catch(error => {
+  //       if (error.code === 'E_PICKER_CANCELLED') {
+  //         return false;
+  //       }
+  //     });
+  // };
 
   const uploadImage = async imageUri => {
     const uploadUri = imageUri;
@@ -151,6 +167,10 @@ export default ChatScreen = ({route}) => {
   useEffect(() => {
     fetchMessageList();
   }, []);
+
+  useEffect(() => {
+    fetchMessageList();
+  }, [deletedMessage]);
 
   const onSend = async (messages = []) => {
     const msg = messages[0];
@@ -251,6 +271,11 @@ export default ChatScreen = ({route}) => {
                 name="happy-outline"
                 size={25}
                 style={{marginStart: 10, marginTop: 8}}
+                color={isOpenEmojiPicker ? '#2e64e5' : '#888'}
+                onPress={() => {
+                  setIsOpenEmojiPicker(!isOpenEmojiPicker);
+                  inputRef.current.blur();
+                }}
               />
             </TouchableOpacity>
           </>
@@ -261,6 +286,11 @@ export default ChatScreen = ({route}) => {
                 name="happy-outline"
                 size={25}
                 style={{marginStart: 10, marginTop: 8}}
+                color={isOpenEmojiPicker ? '#2e64e5' : '#888'}
+                onPress={() => {
+                  setIsOpenEmojiPicker(!isOpenEmojiPicker);
+                  inputRef.current.blur();
+                }}
               />
             </TouchableOpacity>
             <TouchableOpacity>
@@ -273,7 +303,7 @@ export default ChatScreen = ({route}) => {
           </>
         )}
 
-        <Send {...props}>
+        <Send {...props} text={textInput}>
           <Icon
             name="send"
             color="#2e64e5"
@@ -338,7 +368,9 @@ export default ChatScreen = ({route}) => {
               <Text>Gallery</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              onPress={()=>{console.log('choose file clicked!')}}
+              onPress={() => {
+                console.log('choose file clicked!');
+              }}
               style={{
                 flexDirection: 'row',
                 alignItems: 'center',
@@ -359,11 +391,159 @@ export default ChatScreen = ({route}) => {
           <Icon
             name="add-circle-outline"
             size={28}
-            color="#2e64e5"
+            color={isOpenActions ? '#2e64e5' : '#888'}
             style={{marginStart: 10}}
           />
         </TouchableOpacity>
       </View>
+    );
+  };
+
+  const renderComposer = props => {
+    return (
+      <Composer
+        {...props}
+        textInputStyle={{
+          // borderWidth: 0.5,
+          // borderColor: 'gray',
+          // borderRadius: 20,
+          // marginRight: 10,
+          paddingHorizontal: 10,
+          backgroundColor: '#fff',
+        }}
+        text={textInput}
+        onTextChanged={text => {
+          setTextInput(text);
+        }}
+        textInputProps={{
+          onFocus: () => {
+            setIsOpenEmojiPicker(false);
+          },
+          ref: inputRef,
+        }}
+      />
+    );
+  };
+
+  const deleteFirestoreData_2_collection = async (
+    nameCollection1,
+    nameCollection2,
+    idDoc1,
+    messageId,
+  ) => {
+    await firestore()
+      .collection(nameCollection1)
+      .doc(idDoc1)
+      .collection(nameCollection2)
+      .where('_id', '==', messageId)
+      .delete()
+      .then(() => {
+        console.log(`${nameCollection2} deleted!`);
+      })
+      .catch(e => {
+        console.log(`Error deleting ${nameCollection2}: `, e);
+      });
+  };
+
+  const recallMessage = async messageId => {
+    await firestore()
+      .collection('chats')
+      .doc(user.uid + route.params.userId)
+      .collection('messages')
+      .where('_id', '==', messageId)
+      .get()
+      .then(documentSnapshot => {
+        // console.log('documentSnapshot: ', documentSnapshot.data());
+        if (documentSnapshot.exists) {
+          deleteFirestoreData_2_collection(
+            'chats',
+            'messages',
+            user.uid + route.params.userId,
+            messageId,
+          );
+        } else {
+          console.log('not exist');
+        }
+      });
+
+    await firestore()
+      .collection('chats')
+      .doc(route.params.userId + user.uid)
+      .collection('messages')
+      .where('_id', '==', messageId)
+      .get()
+      .then(documentSnapshot => {
+        // console.log('documentSnapshot: ', documentSnapshot.data());
+        if (documentSnapshot.exists) {
+          deleteFirestoreData_2_collection(
+            'chats',
+            'messages',
+            route.params.userId + user.uid,
+            messageId,
+          );
+        } else {
+          console.log('not exist');
+        }
+      });
+    console.log('recall message');
+    setDeletedMessage(true);
+  };
+
+  const removeMessageOnYourSide = async messageId => {
+    await firestore()
+      .collection('chats')
+      .doc(user.uid + route.params.userId)
+      .collection('messages')
+      .where('_id', '==', messageId)
+      .get()
+      .then(documentSnapshot => {
+        if (documentSnapshot.exists) {
+          deleteFirestoreData_2_collection(
+            'chats',
+            'messages',
+            user.uid + route.params.userId,
+            messageId,
+          );
+        } else {
+          console.log('not exist');
+        }
+      });
+    console.log('remove message');
+    setDeletedMessage(true);
+  };
+
+  const onLongPress = (context, message) => {
+    console.log('context: ', context);
+    console.log('message: ', message);
+    const options = [
+      'Copy',
+      'Recall the message',
+      'Remove the message on your side',
+      'Cancel',
+    ];
+    const cancelButtonIndex = options.length - 1;
+    context.actionSheet().showActionSheetWithOptions(
+      {
+        options,
+        cancelButtonIndex,
+      },
+      buttonIndex => {
+        switch (buttonIndex) {
+          case 0:
+            Clipboard.setString(message.text);
+            break;
+          case 1:
+            console.log('message._id: ', message._id);
+            recallMessage(message._id); //pass the function here
+            setDeletedMessage(false);
+            break;
+          case 2:
+            console.log('message._id: ', message._id);
+            removeMessageOnYourSide(message._id); //pass the function here
+            setDeletedMessage(false);
+            break;
+        }
+      },
     );
   };
 
@@ -375,23 +555,40 @@ export default ChatScreen = ({route}) => {
         user={{
           _id: user.uid,
         }}
+        onPressAvatar={console.log}
         renderBubble={renderBubble}
         alwaysShowSend
         renderSend={renderSend}
         scrollToBottom
         scrollToBottomComponent={scrollToBottomComponent}
-        renderActions={renderActions}
-        textInputStyle={{
-          // borderWidth: 0.5,
-          // borderColor: 'gray',
-          // borderRadius: 20,
-          // marginRight: 10,
-          paddingHorizontal: 10,
-          backgroundColor: '#fff',
-        }}
         renderInputToolbar={renderInputToolbar}
-        // renderActions={renderActions}
+        renderActions={renderActions}
+        renderComposer={renderComposer}
+        isLoadingEarlier={true}
+        onLongPress={onLongPress}
+        parsePatterns={linkStyle => [
+          {
+            pattern: /#(\w+)/,
+            style: linkStyle,
+            onPress: tag => console.log(`Pressed on hashtag: ${tag}`),
+          },
+        ]}
       />
+      {isOpenEmojiPicker ? (
+        <EmojiPicker
+          emojis={emojis}
+          recent={recent}
+          autoFocus={false}
+          loading={false}
+          darkMode={false}
+          perLine={10}
+          onSelect={emojiInfor => {
+            const text = textInput;
+            setTextInput(text + emojiInfor.emoji);
+          }}
+          onChangeRecent={setRecent}
+        />
+      ) : null}
     </View>
   );
 };

@@ -12,7 +12,7 @@ import {
   TouchableOpacity,
   Image,
   TextInput,
-  Animated
+  Animated,
 } from 'react-native';
 import Clipboard, {useClipboard} from '@react-native-clipboard/clipboard';
 import FormButton from '../components/FormButton';
@@ -25,6 +25,7 @@ import {
   Send,
   InputToolbar,
   Composer,
+  Avatar,
 } from 'react-native-gifted-chat';
 import Icon from 'react-native-vector-icons/Ionicons';
 import firestore from '@react-native-firebase/firestore';
@@ -45,6 +46,19 @@ export default ChatScreen = ({route}) => {
   const [recent, setRecent] = useState([]);
   const [textInput, setTextInput] = useState('');
   const [deletedMessage, setDeletedMessage] = useState(false);
+  const [heightValue, setHeightValue] = useState(new Animated.Value(0));
+
+  useEffect(() => {
+    showEmojis();
+  }, [isOpenEmojiPicker]);
+
+  const showEmojis = () => {
+    Animated.timing(heightValue, {
+      toValue: isOpenEmojiPicker ? 400 : 0,
+      duration: 10,
+      useNativeDriver: false,
+    }).start();
+  };
 
   const inputRef = useRef();
 
@@ -559,6 +573,15 @@ export default ChatScreen = ({route}) => {
     }
   };
 
+  const renderAvatar = props => {
+    return (
+      <Avatar
+        {...props}
+        imageStyle={{left: {width: 30, height: 30}}}
+      />
+    );
+  };
+
   return (
     <View style={styles.container}>
       <GiftedChat
@@ -578,6 +601,8 @@ export default ChatScreen = ({route}) => {
         renderComposer={renderComposer}
         isLoadingEarlier={true}
         onLongPress={onLongPress}
+        renderAvatar={renderAvatar}
+        // renderAvatarOnTop={true}
         parsePatterns={linkStyle => [
           {
             pattern: /#(\w+)/,
@@ -586,7 +611,8 @@ export default ChatScreen = ({route}) => {
           },
         ]}
       />
-      {isOpenEmojiPicker ? (
+
+      <Animated.View style={{height: heightValue}}>
         <EmojiPicker
           emojis={emojis}
           recent={recent}
@@ -600,7 +626,7 @@ export default ChatScreen = ({route}) => {
           }}
           onChangeRecent={setRecent}
         />
-      ) : null}
+      </Animated.View>
     </View>
   );
 };

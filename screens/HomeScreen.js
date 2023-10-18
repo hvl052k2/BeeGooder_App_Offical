@@ -1,4 +1,4 @@
-import React, {useContext, useEffect, useState} from 'react';
+import React, {useContext, useEffect, useState, useMemo} from 'react';
 import {
   View,
   Text,
@@ -83,10 +83,10 @@ export default HomeScreen = ({navigation}) => {
     }
   };
 
-  useEffect(() => {
-    fetchPosts();
-    getFollowingList();
-  }, [isFocused]);
+  // useEffect(() => {
+  //   fetchPosts();
+  //   getFollowingList();
+  // }, [isFocused]);
 
   useEffect(() => {
     fetchPosts();

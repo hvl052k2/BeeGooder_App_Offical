@@ -225,19 +225,28 @@ const MessagesStack = ({navigation}) => (
             <TouchableOpacity>
               <Icon
                 name="call"
-                size={30}
+                size={28}
                 backgroundColor="#fff"
                 color="#2e64e5"
-                style={{marginRight: 20, backgroundColor: 'transparent'}}
+                style={{marginRight: 15, backgroundColor: 'transparent'}}
               />
             </TouchableOpacity>
             <TouchableOpacity>
               <Icon
                 name="videocam"
-                size={30}
+                size={28}
                 backgroundColor="#fff"
                 color="#2e64e5"
-                style={{marginRight: 20, backgroundColor: 'transparent'}}
+                style={{marginRight: 15, backgroundColor: 'transparent'}}
+              />
+            </TouchableOpacity>
+            <TouchableOpacity>
+              <Icon
+                name="alert-circle"
+                size={28}
+                backgroundColor="#fff"
+                color="#2e64e5"
+                style={{marginRight: 15, backgroundColor: 'transparent'}}
               />
             </TouchableOpacity>
           </View>

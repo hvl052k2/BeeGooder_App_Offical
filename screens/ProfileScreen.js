@@ -33,8 +33,8 @@ export default ProfileScreen = React.memo(({navigation, route}) => {
   const [deleted, setDeleted] = useState(false);
   const [userData, setUserData] = useState(null);
   const [currentUserData, setCurrentUserData] = useState(null);
-  const [following, setFollowing] = useState(0);
-  const [follower, setFollower] = useState(0);
+  const [following, setFollowing] = useState([]);
+  const [follower, setFollower] = useState([]);
   const [isFollowed, setIsFollowed] = useState(null);
   const isFocused = useIsFocused();
 
@@ -194,6 +194,7 @@ export default ProfileScreen = React.memo(({navigation, route}) => {
       for (const documentSnapshot of querySnapshot.docs) {
         list.push(documentSnapshot.data().userId);
       }
+
       setFollowing(list);
     } catch (error) {
       console.error('Error fetching messages:', error);
@@ -364,9 +365,8 @@ export default ProfileScreen = React.memo(({navigation, route}) => {
     getFollowings();
     getFollowers();
     navigation.addListener('focus', () => {
-      // fetchPosts();
       setLoading(!loading);
-    }); //cho phép refresh lại screen khi có thay đổi
+    });
     setDeleted(false);
   }, [deleted, navigation, loading]);
 
@@ -374,7 +374,11 @@ export default ProfileScreen = React.memo(({navigation, route}) => {
     <SafeAreaView style={{flex: 1, backgroundColor: '#fff'}}>
       <ScrollView
         style={styles.container}
-        contentContainerStyle={{justifyContent: 'center', alignItems: 'center'}}
+        contentContainerStyle={{
+          justifyContent: 'center',
+          alignItems: 'center',
+          paddingHorizontal: 20,
+        }}
         showsVerticalScrollIndicator={false}>
         <Image
           style={styles.userImg}
@@ -486,7 +490,7 @@ export default ProfileScreen = React.memo(({navigation, route}) => {
             }}>
             <Text style={styles.userInfoTitle}>{follower}</Text>
             <Text style={styles.userInfoSubTitle}>
-              {follower > 1 ? 'Followers' : 'Follower'}
+              {follower.length > 1 ? 'Followers' : 'Follower'}
             </Text>
           </TouchableOpacity>
 
@@ -533,7 +537,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
-    padding: 20,
   },
   userImg: {
     height: 150,

@@ -12,6 +12,7 @@ import {
   TouchableOpacity,
   Image,
   TextInput,
+  Animated
 } from 'react-native';
 import Clipboard, {useClipboard} from '@react-native-clipboard/clipboard';
 import FormButton from '../components/FormButton';
@@ -196,6 +197,7 @@ export default ChatScreen = ({route}) => {
       .doc(route.params.userId + user.uid)
       .collection('messages')
       .add(myMsg);
+    setTextInput('');
     setImageUrl('');
     setImageData(null);
   };
@@ -425,26 +427,6 @@ export default ChatScreen = ({route}) => {
     );
   };
 
-  const deleteFirestoreData_2_collection = async (
-    nameCollection1,
-    nameCollection2,
-    idDoc1,
-    messageId,
-  ) => {
-    await firestore()
-      .collection(nameCollection1)
-      .doc(idDoc1)
-      .collection(nameCollection2)
-      .where('_id', '==', messageId)
-      .delete()
-      .then(() => {
-        console.log(`${nameCollection2} deleted!`);
-      })
-      .catch(e => {
-        console.log(`Error deleting ${nameCollection2}: `, e);
-      });
-  };
-
   const recallMessage = async messageId => {
     await firestore()
       .collection('chats')
@@ -453,17 +435,9 @@ export default ChatScreen = ({route}) => {
       .where('_id', '==', messageId)
       .get()
       .then(documentSnapshot => {
-        // console.log('documentSnapshot: ', documentSnapshot.data());
-        if (documentSnapshot.exists) {
-          deleteFirestoreData_2_collection(
-            'chats',
-            'messages',
-            user.uid + route.params.userId,
-            messageId,
-          );
-        } else {
-          console.log('not exist');
-        }
+        documentSnapshot.forEach(snapShot => {
+          snapShot.ref.delete();
+        });
       });
 
     await firestore()
@@ -473,19 +447,26 @@ export default ChatScreen = ({route}) => {
       .where('_id', '==', messageId)
       .get()
       .then(documentSnapshot => {
-        // console.log('documentSnapshot: ', documentSnapshot.data());
-        if (documentSnapshot.exists) {
-          deleteFirestoreData_2_collection(
-            'chats',
-            'messages',
-            route.params.userId + user.uid,
-            messageId,
-          );
-        } else {
-          console.log('not exist');
-        }
+        documentSnapshot.forEach(snapShot => {
+          const {image} = snapShot.data();
+          if (image != '') {
+            const storageRef = storage().refFromURL(image);
+            const imageRef = storage().ref(storageRef.fullPath);
+            imageRef
+              .delete()
+              .then(() => {
+                console.log(`${image} has been deleted successfuly!`);
+                snapShot.ref.delete();
+              })
+              .catch(e => {
+                console.log('Error while deleting the image: ', e);
+              });
+          } else {
+            snapShot.ref.delete();
+          }
+        });
       });
-    console.log('recall message');
+    console.log('recalled message');
     setDeletedMessage(true);
   };
 
@@ -497,54 +478,85 @@ export default ChatScreen = ({route}) => {
       .where('_id', '==', messageId)
       .get()
       .then(documentSnapshot => {
-        if (documentSnapshot.exists) {
-          deleteFirestoreData_2_collection(
-            'chats',
-            'messages',
-            user.uid + route.params.userId,
-            messageId,
-          );
-        } else {
-          console.log('not exist');
-        }
+        documentSnapshot.forEach(snapShot => {
+          const {image} = snapShot.data();
+          if (image != '') {
+            const storageRef = storage().refFromURL(image);
+            const imageRef = storage().ref(storageRef.fullPath);
+            imageRef
+              .delete()
+              .then(() => {
+                console.log(`${image} has been deleted successfuly!`);
+                snapShot.ref.delete();
+              })
+              .catch(e => {
+                console.log('Error while deleting the image: ', e);
+              });
+          } else {
+            snapShot.ref.delete();
+          }
+        });
       });
-    console.log('remove message');
+    console.log('removed message');
     setDeletedMessage(true);
   };
 
   const onLongPress = (context, message) => {
-    console.log('context: ', context);
     console.log('message: ', message);
-    const options = [
-      'Copy',
-      'Recall the message',
-      'Remove the message on your side',
-      'Cancel',
-    ];
-    const cancelButtonIndex = options.length - 1;
-    context.actionSheet().showActionSheetWithOptions(
-      {
-        options,
-        cancelButtonIndex,
-      },
-      buttonIndex => {
-        switch (buttonIndex) {
-          case 0:
-            Clipboard.setString(message.text);
-            break;
-          case 1:
-            console.log('message._id: ', message._id);
-            recallMessage(message._id); //pass the function here
-            setDeletedMessage(false);
-            break;
-          case 2:
-            console.log('message._id: ', message._id);
-            removeMessageOnYourSide(message._id); //pass the function here
-            setDeletedMessage(false);
-            break;
-        }
-      },
-    );
+    if (message.sendBy == user.uid) {
+      const options = [
+        'Copy',
+        'Recall the message',
+        'Remove the message on your side',
+        'Cancel',
+      ];
+      const cancelButtonIndex = options.length - 1;
+
+      context.actionSheet().showActionSheetWithOptions(
+        {
+          options,
+          cancelButtonIndex,
+        },
+        buttonIndex => {
+          switch (buttonIndex) {
+            case 0:
+              Clipboard.setString(message.text);
+              break;
+            case 1:
+              console.log('message._id: ', message._id);
+              recallMessage(message._id);
+              setDeletedMessage(false);
+              break;
+            case 2:
+              console.log('message._id: ', message._id);
+              removeMessageOnYourSide(message._id);
+              setDeletedMessage(false);
+              break;
+          }
+        },
+      );
+    } else {
+      const options = ['Copy', 'Remove the message on your side', 'Cancel'];
+      const cancelButtonIndex = options.length - 1;
+      context.actionSheet().showActionSheetWithOptions(
+        {
+          options,
+          cancelButtonIndex,
+        },
+        buttonIndex => {
+          switch (buttonIndex) {
+            case 0:
+              Clipboard.setString(message.text);
+              break;
+            case 1:
+              console.log('message._id: ', message._id);
+              removeMessageOnYourSide(message._id);
+              setDeletedMessage(false);
+              break;
+          }
+        },
+      );
+    }
   };
 
   return (

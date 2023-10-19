@@ -21,6 +21,7 @@ import Animated from 'react-native-reanimated';
 import {AuthContext} from '../navigation/AuthProvider.android';
 import firestore from '@react-native-firebase/firestore';
 import storage from '@react-native-firebase/storage';
+import Modal from 'react-native-modal';
 
 const EditProfileScreen = () => {
   const {user, logout} = useContext(AuthContext);
@@ -28,8 +29,7 @@ const EditProfileScreen = () => {
   const [uploading, setUploading] = useState(false);
   const [transferred, setTransferred] = useState(0);
   const [userData, setUserData] = useState(null);
-  const [isOpen, setIsOpen] = useState(false);
-  const [isValid, setIsValid] = useState(false);
+  const [isModalVisible, setIsModalVisible] = useState(false);
 
   const getUser = async () => {
     const currentUser = await firestore()
@@ -131,11 +131,17 @@ const EditProfileScreen = () => {
       compressImageMaxHeight: 300,
       cropping: true,
       compressImageQuality: 0.7,
-    }).then(image => {
-      console.log(image);
-      const imageUri = Platform.OS === 'ios' ? image.sourceURL : image.path;
-      setImage(imageUri);
-    });
+    })
+      .then(image => {
+        console.log(image);
+        const imageUri = Platform.OS === 'ios' ? image.sourceURL : image.path;
+        setImage(imageUri);
+      })
+      .catch(error => {
+        if (error.code === 'E_PICKER_CANCELLED') {
+          return false;
+        }
+      });
   };
 
   const choosePhotoFromLibrary = () => {
@@ -144,182 +150,192 @@ const EditProfileScreen = () => {
       height: 300,
       cropping: true,
       compressImageQuality: 0.7,
-    }).then(image => {
-      console.log(image);
-      const imageUri = Platform.OS === 'ios' ? image.sourceURL : image.path;
-      setImage(imageUri);
-    });
+    })
+      .then(image => {
+        console.log(image);
+        const imageUri = Platform.OS === 'ios' ? image.sourceURL : image.path;
+        setImage(imageUri);
+      })
+      .catch(error => {
+        if (error.code === 'E_PICKER_CANCELLED') {
+          return false;
+        }
+      });
   };
 
   const bottomSheetRef = useRef(null);
   const snapPoints = useMemo(() => ['25%', '50%'], []);
 
   return (
-    <BottomSheetModalProvider>
-      <View
-        style={[
-          styles.container,
-          {backgroundColor: isOpen ? '#f2f2f2' : '#fff'},
-        ]}>
-        <BottomSheetModal
-          ref={bottomSheetRef}
-          index={1}
-          snapPoints={snapPoints}>
-          <View style={styles.panel}>
-            <View style={{alignItems: 'center'}}>
-              <Text style={styles.panelTitle}>Upload Photo</Text>
-              <Text style={styles.panelSubtitle}>
-                Choose Your Profile Picture
-              </Text>
-            </View>
-            <TouchableOpacity
-              style={styles.panelButton}
-              onPress={takePhotoFromCamera}>
-              <Text style={styles.panelButtonTitle}>Take Photo</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.panelButton}
-              onPress={choosePhotoFromLibrary}>
-              <Text style={styles.panelButtonTitle}>Choose From Library</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.panelButton}
-              onPress={() => {
-                bottomSheetRef.current.close(), setIsOpen(false);
-              }}>
-              <Text style={styles.panelButtonTitle}>Cancel</Text>
-            </TouchableOpacity>
+    <View style={[styles.container, {backgroundColor: '#fff'}]}>
+      <Modal
+        isVisible={isModalVisible}
+        animationIn="fadeInUp"
+        animationOut="fadeOutDown"
+        onBackdropPress={() => setIsModalVisible(false)}>
+        <View style={styles.panel}>
+          <View style={{alignItems: 'center'}}>
+            <Text style={styles.panelTitle}>Upload Photo</Text>
+            <Text style={styles.panelSubtitle}>
+              Choose Your Profile Picture
+            </Text>
           </View>
-        </BottomSheetModal>
-        <View style={{alignItems: 'center', margin: 20}}>
           <TouchableOpacity
-            onPress={() => {
-              bottomSheetRef.current?.present(), setIsOpen(true);
-            }}>
-            <View
-              style={{
-                height: 100,
-                width: 100,
-                borderRadius: 15,
-                justifyContent: 'center',
-                alignItems: 'center',
-              }}>
-              <ImageBackground
-                source={{
-                  uri: image
-                    ? image
-                    : userData
-                    ? userData.userImg ||
-                      'https://lh5.googleusercontent.com/-b0PKyNuQv5s/AAAAAAAAAAI/AAAAAAAAAAA/AMZuuclxAM4M1SCBGAO7Rp-QP6zgBEUkOQ/s96-c/photo.jpg'
-                    : 'https://lh5.googleusercontent.com/-b0PKyNuQv5s/AAAAAAAAAAI/AAAAAAAAAAA/AMZuuclxAM4M1SCBGAO7Rp-QP6zgBEUkOQ/s96-c/photo.jpg',
-                }}
-                style={{height: 100, width: 100}}
-                imageStyle={{borderRadius: 15}}>
-                <View
-                  style={{
-                    flex: 1,
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                  }}>
-                  <Icon
-                    name="camera"
-                    size={35}
-                    color="#fff"
-                    style={{
-                      opacity: 0.7,
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      borderWidth: 1,
-                      borderColor: '#fff',
-                      borderRadius: 10,
-                    }}
-                  />
-                </View>
-              </ImageBackground>
-            </View>
+            style={{position: 'absolute', top: 5, right: 5}}
+            onPress={() => setIsModalVisible(false)}>
+            <Icon name="close-outline" size={35} color="red" />
           </TouchableOpacity>
-          <Text style={{marginTop: 10, fontSize: 18, fontWeight: 'bold'}}>
-            {userData ? userData.fname : ''} {userData ? userData.lname : ''}
-          </Text>
-          {/* <Text>{user.uid}</Text> */}
-          <View style={styles.action}>
-            <Icon name="person-outline" color="#333333" size={20} />
-            <TextInput
-              placeholder="First Name"
-              placeholderTextColor="#666666"
-              autoCorrect={false}
-              value={userData ? userData.fname : ''}
-              onChangeText={txt => setUserData({...userData, fname: txt})}
-              style={styles.textInput}
-            />
+          <TouchableOpacity
+            style={styles.panelButton}
+            onPress={() => {
+              setIsModalVisible(false), takePhotoFromCamera();
+            }}>
+            <Text style={styles.panelButtonTitle}>Take Photo</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.panelButton}
+            onPress={() => {
+              setIsModalVisible(false), choosePhotoFromLibrary();
+            }}>
+            <Text style={styles.panelButtonTitle}>Choose From Library</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.panelButton}
+            onPress={() => {
+              setIsModalVisible(false);
+            }}>
+            <Text style={styles.panelButtonTitle}>Cancel</Text>
+          </TouchableOpacity>
+        </View>
+      </Modal>
+      <View style={{alignItems: 'center', margin: 20}}>
+        <TouchableOpacity
+          onPress={() => {
+            setIsModalVisible(true);
+          }}>
+          <View
+            style={{
+              height: 100,
+              width: 100,
+              borderRadius: 15,
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}>
+            <ImageBackground
+              source={{
+                uri: image
+                  ? image
+                  : userData
+                  ? userData.userImg ||
+                    'https://lh5.googleusercontent.com/-b0PKyNuQv5s/AAAAAAAAAAI/AAAAAAAAAAA/AMZuuclxAM4M1SCBGAO7Rp-QP6zgBEUkOQ/s96-c/photo.jpg'
+                  : 'https://lh5.googleusercontent.com/-b0PKyNuQv5s/AAAAAAAAAAI/AAAAAAAAAAA/AMZuuclxAM4M1SCBGAO7Rp-QP6zgBEUkOQ/s96-c/photo.jpg',
+              }}
+              style={{height: 100, width: 100}}
+              imageStyle={{borderRadius: 15}}>
+              <View
+                style={{
+                  flex: 1,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                }}>
+                <Icon
+                  name="camera"
+                  size={35}
+                  color="#fff"
+                  style={{
+                    opacity: 0.7,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    borderWidth: 1,
+                    borderColor: '#fff',
+                    borderRadius: 10,
+                  }}
+                />
+              </View>
+            </ImageBackground>
           </View>
-          <View style={styles.action}>
-            <Icon name="person-outline" color="#333333" size={20} />
-            <TextInput
-              placeholder="Last Name"
-              placeholderTextColor="#666666"
-              value={userData ? userData.lname : ''}
-              onChangeText={txt => setUserData({...userData, lname: txt})}
-              autoCorrect={false}
-              style={styles.textInput}
-            />
-          </View>
-          <View style={styles.action}>
-            <Icon name="clipboard-outline" color="#333333" size={20} />
-            <TextInput
-              multiline
-              numberOfLines={3}
-              placeholder="About Me"
-              placeholderTextColor="#666666"
-              value={userData ? userData.about : ''}
-              onChangeText={txt => setUserData({...userData, about: txt})}
-              autoCorrect={true}
-              style={[styles.textInput, {height: 40}]}
-            />
-          </View>
-          <View style={styles.action}>
-            <Icon name="call-outline" color="#333333" size={20} />
-            <TextInput
-              placeholder="Phone"
-              placeholderTextColor="#666666"
-              keyboardType="number-pad"
-              autoCorrect={false}
-              value={userData ? userData.phone : ''}
-              onChangeText={txt => setUserData({...userData, phone: txt})}
-              style={styles.textInput}
-            />
-          </View>
-
-          <View style={styles.action}>
-            <Icon name="earth" color="#333333" size={20} />
-            <TextInput
-              placeholder="Country"
-              placeholderTextColor="#666666"
-              autoCorrect={false}
-              value={userData ? userData.country : ''}
-              onChangeText={txt => setUserData({...userData, country: txt})}
-              style={styles.textInput}
-            />
-          </View>
-          <View style={styles.action}>
-            <Icon name="location-outline" color="#333333" size={20} />
-            <TextInput
-              placeholder="City"
-              placeholderTextColor="#666666"
-              autoCorrect={false}
-              value={userData ? userData.city : ''}
-              onChangeText={txt => setUserData({...userData, city: txt})}
-              style={styles.textInput}
-            />
-          </View>
-          <FormButton
-            buttonTitle="Update"
-            onPress={handleUpdate}
-            isValid={true}
+        </TouchableOpacity>
+        <Text style={{marginTop: 10, fontSize: 18, fontWeight: 'bold'}}>
+          {userData ? userData.fname : ''} {userData ? userData.lname : ''}
+        </Text>
+        {/* <Text>{user.uid}</Text> */}
+        <View style={styles.action}>
+          <Icon name="person-outline" color="#333333" size={20} />
+          <TextInput
+            placeholder="First Name"
+            placeholderTextColor="#666666"
+            autoCorrect={false}
+            value={userData ? userData.fname : ''}
+            onChangeText={txt => setUserData({...userData, fname: txt})}
+            style={styles.textInput}
           />
         </View>
+        <View style={styles.action}>
+          <Icon name="person-outline" color="#333333" size={20} />
+          <TextInput
+            placeholder="Last Name"
+            placeholderTextColor="#666666"
+            value={userData ? userData.lname : ''}
+            onChangeText={txt => setUserData({...userData, lname: txt})}
+            autoCorrect={false}
+            style={styles.textInput}
+          />
+        </View>
+        <View style={styles.action}>
+          <Icon name="clipboard-outline" color="#333333" size={20} />
+          <TextInput
+            multiline
+            numberOfLines={3}
+            placeholder="About Me"
+            placeholderTextColor="#666666"
+            value={userData ? userData.about : ''}
+            onChangeText={txt => setUserData({...userData, about: txt})}
+            autoCorrect={true}
+            style={[styles.textInput, {height: 40}]}
+          />
+        </View>
+        <View style={styles.action}>
+          <Icon name="call-outline" color="#333333" size={20} />
+          <TextInput
+            placeholder="Phone"
+            placeholderTextColor="#666666"
+            keyboardType="number-pad"
+            autoCorrect={false}
+            value={userData ? userData.phone : ''}
+            onChangeText={txt => setUserData({...userData, phone: txt})}
+            style={styles.textInput}
+          />
+        </View>
+
+        <View style={styles.action}>
+          <Icon name="earth" color="#333333" size={20} />
+          <TextInput
+            placeholder="Country"
+            placeholderTextColor="#666666"
+            autoCorrect={false}
+            value={userData ? userData.country : ''}
+            onChangeText={txt => setUserData({...userData, country: txt})}
+            style={styles.textInput}
+          />
+        </View>
+        <View style={styles.action}>
+          <Icon name="location-outline" color="#333333" size={20} />
+          <TextInput
+            placeholder="City"
+            placeholderTextColor="#666666"
+            autoCorrect={false}
+            value={userData ? userData.city : ''}
+            onChangeText={txt => setUserData({...userData, city: txt})}
+            style={styles.textInput}
+          />
+        </View>
+        <FormButton
+          buttonTitle="Update"
+          onPress={handleUpdate}
+          isValid={true}
+        />
       </View>
-    </BottomSheetModalProvider>
+    </View>
   );
 };
 
@@ -338,6 +354,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   panel: {
+    borderRadius: 20,
     padding: 20,
     backgroundColor: '#FFFFFF',
     paddingTop: 20,

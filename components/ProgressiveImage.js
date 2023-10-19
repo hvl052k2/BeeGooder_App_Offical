@@ -2,6 +2,7 @@ import React from 'react';
 import {View, StyleSheet, Animated, Button, Text} from 'react-native';
 
 class ProgressiveImage extends React.Component {
+
   defaultImageAnimated = new Animated.Value(0);
   imageAnimated = new Animated.Value(0);
   handleDefaultImageLoading = () => {

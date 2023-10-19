@@ -1,4 +1,4 @@
-import React, {useContext, useState, useEffect} from 'react';
+import React, {useContext, useState, useEffect, useMemo} from 'react';
 import FormButton from '../components/FormButton';
 import {AuthContext} from '../navigation/AuthProvider.android';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
@@ -67,15 +67,10 @@ export default FolowingsScreen = ({navigation, route}) => {
     }
   };
 
-  // useEffect(() => {
-  //   fetchFriends();
-  // }, [isFocused]);
-
   useEffect(() => {
     fetchFollowings();
   }, []);
 
-  // console.log("route",route)
   return (
     <Container>
       <FlatList
@@ -86,7 +81,7 @@ export default FolowingsScreen = ({navigation, route}) => {
               navigation.push('HomeProfile', {
                 userId: item.userId,
                 userName: item.userName,
-                followingList: route.params.followingList
+                followingList: route.params.followingList,
               })
             }>
             <UserInfo>

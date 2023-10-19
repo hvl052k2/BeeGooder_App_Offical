@@ -1,5 +1,12 @@
-import React from 'react';
-import {View, StyleSheet, TouchableOpacity, Text, Image} from 'react-native';
+import React, {useState} from 'react';
+import {
+  View,
+  StyleSheet,
+  TouchableOpacity,
+  Text,
+  Image,
+  TextInput,
+} from 'react-native';
 import {createStackNavigator} from '@react-navigation/stack';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -14,168 +21,233 @@ import ProfileScreen from '../screens/ProfileScreen';
 import EditProfileScreen from '../screens/EditProfileScreen';
 import FollowingsScreen from '../screens/FollowingsScreen';
 import FollowersScreen from '../screens/FollowersScreen';
+import SearchScreen from '../screens/SearchScreen';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
-const FeedStack = ({navigation}) => (
-  <Stack.Navigator>
-    <Stack.Screen
-      name="BeeGooder"
-      component={HomeScreen}
-      options={{
-        headerTitleAlign: 'center',
-        headerTitleStyle: {
-          color: '#2e64e5',
-          fontFamily: 'Kufam-SemiBoldItalic',
-          fontSize: 20,
-          fontWeight: 'bold',
-        },
-        headerStyle: {
-          shadowColor: '#fff',
-          elevation: 0,
-        },
-        headerRight: () => (
-          <View style={{marginRight: 10}}>
-            <Icon
-              name="add-circle"
-              size={35}
-              backgroundColor="#fff"
-              color="#2e64e5"
-              onPress={() => navigation.navigate('AddPostScreen')}
-            />
-          </View>
-        ),
-      }}
-    />
+const FeedStack = ({navigation}) => {
+  const [searchInput, setSearchInput] = useState('');
+  return (
+    <Stack.Navigator>
+      <Stack.Screen
+        name="BeeGooder"
+        component={HomeScreen}
+        options={{
+          // headerTitleAlign: 'center',
+          headerTitle: 'BeeGooder',
+          headerTitleStyle: {
+            color: '#2e64e5',
+            fontFamily: 'Kufam-SemiBoldItalic',
+            fontSize: 28,
+            fontWeight: 'bold',
+          },
+          headerStyle: {
+            shadowColor: '#fff',
+            elevation: 0,
+          },
+          headerRight: () => (
+            <View style={{marginRight: 15, flexDirection: 'row'}}>
+              <TouchableOpacity>
+                <Icon
+                  name="search"
+                  size={35}
+                  backgroundColor="#fff"
+                  color="#2e64e5"
+                  style={{marginRight: 15}}
+                  onPress={() => navigation.navigate('SearchScreen')}
+                />
+              </TouchableOpacity>
+              <TouchableOpacity>
+                <Icon
+                  name="add-circle"
+                  size={35}
+                  backgroundColor="#fff"
+                  color="#2e64e5"
+                  onPress={() => navigation.navigate('AddPostScreen')}
+                />
+              </TouchableOpacity>
+            </View>
+          ),
+        }}
+      />
 
-    <Stack.Screen
-      name="AddPostScreen"
-      component={AddPostScreen}
-      options={{
-        title: '',
-        headerTitleAlign: 'center',
-        headerStyle: {
-          backgroundColor: '#2e64e515',
-          shadowColor: '#2e64e515',
-          elevation: 0,
-        },
-        headerBackTitleVisible: false,
-        headerBackImage: () => (
-          <TouchableOpacity
-            style={styles.gobackButton}
-            onPress={() => navigation.goBack()}>
-            <Icon name="arrow-back" size={30} color="#2e64e5" />
-          </TouchableOpacity>
-        ),
-        // headerRight: ()=>(
-        //   <Text style={{marginRight: 10, color: "#2e64e5", fontSize: 18, fontWeight: 'bold'}}>Post</Text>
-        // )
-      }}
-    />
+      <Stack.Screen
+        name="AddPostScreen"
+        component={AddPostScreen}
+        options={{
+          title: '',
+          headerTitleAlign: 'center',
+          headerStyle: {
+            backgroundColor: '#2e64e515',
+            shadowColor: '#2e64e515',
+            elevation: 0,
+          },
+          headerBackTitleVisible: false,
+          headerBackImage: () => (
+            <TouchableOpacity
+              style={styles.gobackButton}
+              onPress={() => navigation.goBack()}>
+              <Icon name="arrow-back" size={30} color="#2e64e5" />
+            </TouchableOpacity>
+          ),
+          // headerRight: ()=>(
+          //   <Text style={{marginRight: 10, color: "#2e64e5", fontSize: 18, fontWeight: 'bold'}}>Post</Text>
+          // )
+        }}
+      />
 
-    <Stack.Screen
-      name="HomeProfile"
-      component={ProfileScreen}
-      options={{
-        title: '',
-        headerTitleAlign: 'center',
-        headerStyle: {
-          backgroundColor: '#fff',
-          shadowColor: '#fff',
-          elevation: 0,
-        },
-        headerBackTitleVisible: false,
-        // headerBackImage: () => (
-        //   <TouchableOpacity
-        //     style={styles.gobackButton}
-        //     onPress={() => navigation.goBack()}>
-        //     <Icon name="arrow-back" size={30} color="#2e64e5" />
-        //   </TouchableOpacity>
-        // ),
-      }}
-    />
+      <Stack.Screen
+        name="SearchScreen"
+        component={SearchScreen}
+        options={({route}) => ({
+          title: '',
+          headerTitleAlign: 'center',
+          headerStyle: {
+            backgroundColor: '#fff',
+            shadowColor: '#333',
+            elevation: 5,
+            height: 60,
+          },
+          headerShown: false,
+          headerBackTitleVisible: false,
+        })}
+      />
 
-    <Stack.Screen
-      name="Chat"
-      component={ChatScreen}
-      options={({route}) => ({
-        headerTitleStyle: {
-          flexDirection: 'row',
-          alignItems: 'center',
-        },
-        headerStyle: {
-          backgroundColor: '#fff',
-          shadowColor: '#000',
-          elevation: 5
-        },
-        headerTitleAlign: 'left',
-        headerBackTitleVisible: false,
-        headerTitle: props => (
-          <View {...props}>
-            <Image
-              style={{width: 40, height: 40, borderRadius: 50}}
-              source={{uri: route.params.userImg}}
-            />
-            <Text
-              style={{
-                fontSize: 15,
-                color: '#000',
-                marginLeft: 10,
-                fontWeight: 'bold',
-              }}>
-              {route.params.userName}
-            </Text>
-          </View>
-        ),
-      })}
-    />
+      <Stack.Screen
+        name="HomeProfile"
+        component={ProfileScreen}
+        options={{
+          title: '',
+          headerTitleAlign: 'center',
+          headerStyle: {
+            backgroundColor: '#fff',
+            shadowColor: '#fff',
+            elevation: 0,
+          },
+          headerBackTitleVisible: false,
+          // headerBackImage: () => (
+          //   <TouchableOpacity
+          //     style={styles.gobackButton}
+          //     onPress={() => navigation.goBack()}>
+          //     <Icon name="arrow-back" size={30} color="#2e64e5" />
+          //   </TouchableOpacity>
+          // ),
+        }}
+      />
 
-    <Stack.Screen
-      name="FriendsFollowingsScreen"
-      component={FollowingsScreen}
-      options={{
-        title: 'Followings',
-        headerTitleAlign: 'center',
-        headerStyle: {
-          backgroundColor: '#fff',
-          shadowColor: '#fff',
-          elevation: 0,
-        },
-        headerBackTitleVisible: false,
-        // headerBackImage: () => (
-        //   <TouchableOpacity
-        //     style={styles.gobackButton}
-        //     onPress={() => navigation.goBack()}>
-        //     <Icon name="arrow-back" size={30} color="#2e64e5" />
-        //   </TouchableOpacity>
-        // ),
-      }}
-    />
+      <Stack.Screen
+        name="Chat"
+        component={ChatScreen}
+        options={({route}) => ({
+          headerTitleStyle: {
+            flexDirection: 'row',
+            alignItems: 'center',
+          },
+          headerStyle: {
+            backgroundColor: '#fff',
+            shadowColor: '#000',
+            elevation: 5,
+          },
+          headerTitleAlign: 'left',
+          headerBackTitleVisible: false,
+          headerTitle: props => (
+            <View {...props}>
+              <Image
+                style={{width: 40, height: 40, borderRadius: 50}}
+                source={{uri: route.params.userImg}}
+              />
+              <Text
+                style={{
+                  fontSize: 15,
+                  color: '#000',
+                  marginLeft: 10,
+                  fontWeight: 'bold',
+                }}>
+                {route.params.userName}
+              </Text>
+            </View>
+          ),
+          headerRight: () => (
+            <View style={{flexDirection: 'row'}}>
+              <TouchableOpacity>
+                <Icon
+                  name="call"
+                  size={28}
+                  backgroundColor="#fff"
+                  color="#2e64e5"
+                  style={{marginRight: 15, backgroundColor: 'transparent'}}
+                />
+              </TouchableOpacity>
+              <TouchableOpacity>
+                <Icon
+                  name="videocam"
+                  size={28}
+                  backgroundColor="#fff"
+                  color="#2e64e5"
+                  style={{marginRight: 15, backgroundColor: 'transparent'}}
+                />
+              </TouchableOpacity>
+              <TouchableOpacity>
+                <Icon
+                  name="alert-circle"
+                  size={28}
+                  backgroundColor="#fff"
+                  color="#2e64e5"
+                  style={{marginRight: 15, backgroundColor: 'transparent'}}
+                />
+              </TouchableOpacity>
+            </View>
+          ),
+        })}
+      />
 
-    <Stack.Screen
-      name="FriendsFollowersScreen"
-      component={FollowersScreen}
-      options={{
-        title: 'Followers',
-        headerTitleAlign: 'center',
-        headerStyle: {
-          backgroundColor: '#fff',
-          shadowColor: '#fff',
-          elevation: 0,
-        },
-        headerBackTitleVisible: false,
-        // headerBackImage: () => (
-        //   <TouchableOpacity
-        //     style={styles.gobackButton}
-        //     onPress={() => navigation.goBack()}>
-        //     <Icon name="arrow-back" size={30} color="#2e64e5" />
-        //   </TouchableOpacity>
-        // ),
-      }}
-    />
-  </Stack.Navigator>
-);
+      <Stack.Screen
+        name="FriendsFollowingsScreen"
+        component={FollowingsScreen}
+        options={{
+          title: 'Followings',
+          headerTitleAlign: 'center',
+          headerStyle: {
+            backgroundColor: '#fff',
+            shadowColor: '#fff',
+            elevation: 0,
+          },
+          headerBackTitleVisible: false,
+          // headerBackImage: () => (
+          //   <TouchableOpacity
+          //     style={styles.gobackButton}
+          //     onPress={() => navigation.goBack()}>
+          //     <Icon name="arrow-back" size={30} color="#2e64e5" />
+          //   </TouchableOpacity>
+          // ),
+        }}
+      />
+
+      <Stack.Screen
+        name="FriendsFollowersScreen"
+        component={FollowersScreen}
+        options={{
+          title: 'Followers',
+          headerTitleAlign: 'center',
+          headerStyle: {
+            backgroundColor: '#fff',
+            shadowColor: '#fff',
+            elevation: 0,
+          },
+          headerBackTitleVisible: false,
+          // headerBackImage: () => (
+          //   <TouchableOpacity
+          //     style={styles.gobackButton}
+          //     onPress={() => navigation.goBack()}>
+          //     <Icon name="arrow-back" size={30} color="#2e64e5" />
+          //   </TouchableOpacity>
+          // ),
+        }}
+      />
+    </Stack.Navigator>
+  );
+};
 
 const MessagesStack = ({navigation}) => (
   <Stack.Navigator>
@@ -198,7 +270,7 @@ const MessagesStack = ({navigation}) => (
         headerStyle: {
           backgroundColor: '#fff',
           shadowColor: '#000',
-          elevation: 5
+          elevation: 5,
         },
         headerTitleAlign: 'left',
         headerBackTitleVisible: false,
@@ -214,7 +286,6 @@ const MessagesStack = ({navigation}) => (
                 color: '#000',
                 marginLeft: 10,
                 fontWeight: 'bold',
-                
               }}>
               {route.params.userName}
             </Text>
@@ -449,7 +520,8 @@ const AppStack = ({route}) => {
       routeName == 'ChatScreen' ||
       routeName == 'AddPostScreen' ||
       routeName == 'EditProfileScreen' ||
-      routeName == 'Chat'
+      routeName == 'Chat' ||
+      routeName == 'SearchScreen'
     ) {
       return false;
     }
@@ -537,5 +609,33 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     width: 50,
+  },
+  inputContainer: {
+    width: 280,
+    height: 45,
+    borderColor: '#ccc',
+    borderRadius: 20,
+    borderWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+  },
+  iconStyle: {
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 40,
+    borderTopLeftRadius: 20,
+    borderBottomLeftRadius: 20,
+  },
+  input: {
+    padding: 10,
+    borderTopRightRadius: 20,
+    borderBottomRightRadius: 20,
+    flex: 1,
+    fontSize: 16,
+    color: '#333',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

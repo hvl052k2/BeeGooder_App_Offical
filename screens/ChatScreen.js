@@ -26,6 +26,7 @@ import {
   InputToolbar,
   Composer,
   Avatar,
+  Message
 } from 'react-native-gifted-chat';
 import Icon from 'react-native-vector-icons/Ionicons';
 import firestore from '@react-native-firebase/firestore';
@@ -582,6 +583,16 @@ export default ChatScreen = ({route}) => {
     );
   };
 
+  // const renderMessage = (props) => (
+  //   <Message
+  //     {...props}
+  //     containerStyle={{
+  //       left: { backgroundColor: 'lime' },
+  //       right: { backgroundColor: 'gold' },
+  //     }}
+  //   />
+  // );
+
   return (
     <View style={styles.container}>
       <GiftedChat
@@ -602,6 +613,7 @@ export default ChatScreen = ({route}) => {
         isLoadingEarlier={true}
         onLongPress={onLongPress}
         renderAvatar={renderAvatar}
+        // renderMessage={renderMessage}
         // renderAvatarOnTop={true}
         parsePatterns={linkStyle => [
           {

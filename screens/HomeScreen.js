@@ -17,7 +17,6 @@ import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import { AuthContext } from '../navigation/AuthProvider.android';
 import {useIsFocused} from '@react-navigation/native';
 
-
 export default HomeScreen = ({navigation}) => {
   const {user, logout} = useContext(AuthContext);
   const [posts, setPosts] = useState([]);
@@ -83,10 +82,14 @@ export default HomeScreen = ({navigation}) => {
     }
   };
 
-  // useEffect(() => {
-  //   fetchPosts();
-  //   getFollowingList();
-  // }, [isFocused]);
+  useEffect(() => {
+    fetchPosts();
+    getFollowingList();
+  }, []);
+
+  useEffect(() => {
+    getFollowingList();
+  }, [isFocused]);
 
   useEffect(() => {
     fetchPosts();

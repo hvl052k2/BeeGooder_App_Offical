@@ -26,12 +26,12 @@ import {useIsFocused} from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import {run} from 'jest';
 
-export default ProfileScreen = React.memo(({navigation, route}) => {
+export default ProfileScreen = ({navigation, route}) => {
   const {user, logout} = useContext(AuthContext);
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [deleted, setDeleted] = useState(false);
-  const [userData, setUserData] = useState(null);
+  const [userData, setUserData] = useState([]);
   const [currentUserData, setCurrentUserData] = useState(null);
   const [following, setFollowing] = useState([]);
   const [follower, setFollower] = useState([]);
@@ -216,7 +216,7 @@ export default ProfileScreen = React.memo(({navigation, route}) => {
     }
   };
 
-  const handleDelete = postId => {
+  const handleDelete = useCallback(postId => {
     Alert.alert(
       'Delete post',
       'Are you sure?',
@@ -235,7 +235,7 @@ export default ProfileScreen = React.memo(({navigation, route}) => {
       ],
       {cancelable: false},
     );
-  };
+  }, []);
 
   const deletePost = postId => {
     // console.log('Current post id: ', postId);
@@ -377,7 +377,6 @@ export default ProfileScreen = React.memo(({navigation, route}) => {
         contentContainerStyle={{
           justifyContent: 'center',
           alignItems: 'center',
-          paddingHorizontal: 20,
         }}
         showsVerticalScrollIndicator={false}>
         <Image
@@ -531,12 +530,13 @@ export default ProfileScreen = React.memo(({navigation, route}) => {
       </ScrollView>
     </SafeAreaView>
   );
-});
+}
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
+    padding: 20
   },
   userImg: {
     height: 150,

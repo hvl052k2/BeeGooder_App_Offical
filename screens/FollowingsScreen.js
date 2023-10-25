@@ -93,7 +93,7 @@ export default FolowingsScreen = ({navigation, route}) => {
                   <UserName>{item.userName} </UserName>
                   {/* <PostTime>{item.messageTime}</PostTime> */}
                 </UserInfoText>
-                {/* <MessageText>{item.messageText}</MessageText> */}
+                <MessageText numberOfLines={1} ellipsizeMode='tail'>{item.userId}</MessageText>
               </TextSection>
             </UserInfo>
           </Card>

@@ -1,16 +1,19 @@
 import {styled} from 'styled-components/native';
+import { windowHeight, windowWidth } from '../utils/Dimensions';
 
 export const Container = styled.View`
   flex: 1;
   /* align-items: center; */
   background-color: #fff;
-  padding: 20px;
+  padding-right: 20px;
+  padding-left: 20px;
+  padding-top: 10px;
 `;
 
 export const Card = styled.View`
   background-color: #f8f8f8;
   width: 100%;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
   border-radius: 10px;
 `;
 
@@ -51,10 +54,10 @@ export const PostText = styled.Text`
   margin-bottom: 15px;
 `;
 
-export const PostImg = styled.Image`
+export const PostImg = styled.ImageBackground`
   width: 100%;
   height: 250px;
-  margin-top: 15px;
+  /* margin-top: 15px; */
 `;
 
 export const Devider = styled.View`

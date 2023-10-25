@@ -35,7 +35,7 @@ const FeedStack = ({navigation}) => {
         component={HomeScreen}
         options={{
           // headerTitleAlign: 'center',
-          headerTitle: 'BeeGooder',
+          headerTitle: 'BeBetter',
           headerTitleStyle: {
             color: '#2e64e5',
             fontFamily: 'Kufam-SemiBoldItalic',
@@ -43,7 +43,7 @@ const FeedStack = ({navigation}) => {
             fontWeight: 'bold',
           },
           headerStyle: {
-            shadowColor: '#fff',
+            shadowColor: '#000',
             elevation: 0,
           },
           headerRight: () => (
@@ -100,18 +100,10 @@ const FeedStack = ({navigation}) => {
       <Stack.Screen
         name="SearchScreen"
         component={SearchScreen}
-        options={({route}) => ({
-          title: '',
-          headerTitleAlign: 'center',
-          headerStyle: {
-            backgroundColor: '#fff',
-            shadowColor: '#333',
-            elevation: 5,
-            height: 60,
-          },
+        options={{
           headerShown: false,
           headerBackTitleVisible: false,
-        })}
+        }}
       />
 
       <Stack.Screen

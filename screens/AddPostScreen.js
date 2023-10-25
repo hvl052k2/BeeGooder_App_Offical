@@ -32,8 +32,8 @@ export default AddPostScreen = () => {
 
   const takePhotoFromCamera = () => {
     ImagePicker.openCamera({
-      width: 1200,
-      height: 780,
+      // width: 1200,
+      // height: 780,
       cropping: true,
     }).then(image => {
       console.log(image);
@@ -44,8 +44,8 @@ export default AddPostScreen = () => {
 
   const choosePhotoFromLibrary = () => {
     ImagePicker.openPicker({
-      width: 1200,
-      height: 780,
+      // width: 1200,
+      // height: 780,
       cropping: true,
     }).then(image => {
       console.log(image);

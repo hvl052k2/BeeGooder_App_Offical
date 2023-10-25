@@ -5,6 +5,7 @@ import React, {
   useMemo,
   useLayoutEffect,
   useRef,
+  useId,
 } from 'react';
 import {useNavigation} from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -12,6 +13,9 @@ import filter from 'lodash.filter';
 import firestore from '@react-native-firebase/firestore';
 import storage from '@react-native-firebase/storage';
 import {AuthContext} from '../navigation/AuthProvider.android';
+import AsyncStorage, {
+  useAsyncStorage,
+} from '@react-native-async-storage/async-storage';
 
 import {
   View,
@@ -37,12 +41,15 @@ export default SearchScreen = ({route, navigation}) => {
   const [followingList, setFollowingList] = useState([]);
   const [error, setError] = useState(null);
   const [refresh, setRefresh] = useState(false);
-  const searchRef = useRef();
+  const [recent, setRecent] = useState([]);
+
+  const id = useId();
 
   useEffect(() => {
     setIsLoading(true);
     fetchFollowings();
     fetchAllUser();
+    readItemFromStorage();
   }, []);
 
   useEffect(() => {
@@ -56,10 +63,44 @@ export default SearchScreen = ({route, navigation}) => {
     });
   }, [navigation]);
 
+  const readItemFromStorage = async () => {
+    try {
+      const jsonValue = await AsyncStorage.getItem('recent');
+      if (jsonValue != null) {
+        setData(JSON.parse(jsonValue));
+        setRecent(JSON.parse(jsonValue));
+      }
+      console.log('recent: ', recent);
+    } catch (e) {
+      // error reading value
+    }
+  };
+
+  const writeItemToStorage = async newValue => {
+    try {
+      setRecent(newValue);
+      const jsonValue = JSON.stringify(newValue);
+      await AsyncStorage.setItem('recent', jsonValue);
+      console.log('recent: ', recent);
+    } catch (e) {
+      // saving error
+    }
+  };
+
+  clearAll = async () => {
+    try {
+      await AsyncStorage.clear();
+      setRecent([]);
+      setData([]);
+      // setRefresh(!refresh);
+    } catch (e) {
+      // clear error
+    }
+  };
+
   const fetchFollowings = async () => {
     try {
       const listUserId = [];
-      const list = [];
       const querySnapshot = await firestore()
         .collection('follows')
         .doc(user.uid)
@@ -67,25 +108,9 @@ export default SearchScreen = ({route, navigation}) => {
         .get();
 
       for (const documentSnapshot of querySnapshot.docs) {
-        const userId = documentSnapshot.data().userId;
-        listUserId.push(userId);
-        const snapShot = await firestore()
-          .collection('users')
-          .doc(userId)
-          .get();
-        const {fname, lname, userImg} = snapShot.data();
-
-        list.push({
-          userId: snapShot.id,
-          userName: fname ? `${fname} ${lname}` : 'New User',
-          userImg: userImg
-            ? userImg
-            : 'https://lh5.googleusercontent.com/-b0PKyNuQv5s/AAAAAAAAAAI/AAAAAAAAAAA/AMZuuclxAM4M1SCBGAO7Rp-QP6zgBEUkOQ/s96-c/photo.jpg',
-        });
+        listUserId.push(documentSnapshot.data().userId);
       }
       setFollowingList(listUserId);
-      setFollowings(list);
-      setData(list);
       setIsLoading(false);
     } catch (error) {
       console.error('Error fetching messages:', error);
@@ -116,22 +141,34 @@ export default SearchScreen = ({route, navigation}) => {
   };
 
   const handleSearch = query => {
-    setSearchQuery(query);
     const formattedQuery = query.toLowerCase();
-    const filteredData = filter(followings, user => {
+    const filteredData = filter(recent, user => {
       return contains(user, formattedQuery);
     });
     setData(filteredData);
   };
 
-  const submitSearch = () => {
-    // fetchAllUser();
+  const submitSearch = async () => {
     setIsLoading(true);
     const formattedQuery = searchQuery.toLowerCase();
     const filteredData = filter(allUserData, user => {
       return contains(user, formattedQuery);
     });
-    setData(filteredData);
+    if (filteredData.length != 0) {
+      console.log('filteredData: ', filteredData);
+      setData(filteredData);
+      setRefresh(!refresh);
+    } else {
+      const isExisted = recent.some(item => item.userName === searchQuery);
+      if (recent && !isExisted) {
+        writeItemToStorage([
+          ...recent,
+          {userId: id + searchQuery, userName: searchQuery},
+        ]);
+      } else if (!recent) {
+        writeItemToStorage([{userId: id + searchQuery, userName: searchQuery}]);
+      }
+    }
     setRefresh(!refresh);
   };
 
@@ -146,6 +183,58 @@ export default SearchScreen = ({route, navigation}) => {
     setIsLoading(true);
     setData(data.sort((a, b) => (a.userName > b.userName ? 1 : -1)));
     setRefresh(!refresh);
+  };
+
+  const handleDeleteAllRecent = () => {
+    Alert.alert(
+      'Information',
+      'Are you sure to delete all history search',
+      [
+        {
+          text: 'Cancel',
+          onPress: () => console.log('Cancle Pressed!'),
+          style: 'cancel',
+        },
+        {
+          text: 'Ok',
+          onPress: () => {
+            clearAll();
+          },
+        },
+      ],
+      {cancelable: false},
+    );
+  };
+
+  const deleteItem = itemId => {
+    const index = recent.findIndex(item => item.userId == itemId);
+    if (index !== -1) {
+      recent.splice(index, 1);
+      setData(recent);
+      setRecent(recent);
+    }
+    writeItemToStorage([...recent]);
+  };
+
+  const handleDelete = itemId => {
+    Alert.alert(
+      'Information',
+      'Are you sure to delete',
+      [
+        {
+          text: 'Cancel',
+          onPress: () => console.log('Cancle Pressed!'),
+          style: 'cancel',
+        },
+        {
+          text: 'Ok',
+          onPress: () => {
+            deleteItem(itemId);
+          },
+        },
+      ],
+      {cancelable: false},
+    );
   };
 
   return (
@@ -169,6 +258,7 @@ export default SearchScreen = ({route, navigation}) => {
             placeholder="Search..."
             placeholderTextColor="#666"
             onChangeText={text => {
+              setSearchQuery(text);
               handleSearch(text);
             }}
           />
@@ -180,7 +270,7 @@ export default SearchScreen = ({route, navigation}) => {
                 backgroundColor="transparent"
                 onPress={() => {
                   setSearchQuery('');
-                  setData(followings);
+                  setData(recent);
                 }}
               />
             </TouchableOpacity>
@@ -191,7 +281,9 @@ export default SearchScreen = ({route, navigation}) => {
               size={30}
               backgroundColor="transparent"
               onPress={() => {
-                submitSearch();
+                if (searchQuery != '') {
+                  submitSearch();
+                }
               }}
             />
           </TouchableOpacity>
@@ -204,6 +296,33 @@ export default SearchScreen = ({route, navigation}) => {
             style={{marginLeft: 10}}
             onPress={sortByName}
           />
+        </TouchableOpacity>
+      </View>
+      <View style={styles.recentBar}>
+        <Icon
+          name="time-outline"
+          size={30}
+          color="#000"
+          style={{marginLeft: 10}}
+          onPress={sortByName}
+        />
+        <Text
+          style={{
+            marginLeft: 10,
+            fontSize: 18,
+            fontWeight: 500,
+            color: '#000',
+          }}>
+          Recent
+        </Text>
+        <TouchableOpacity
+          style={styles.btnClear}
+          onPress={() => {
+            if (recent.length != 0) {
+              handleDeleteAllRecent();
+            }
+          }}>
+          <Text style={{fontSize: 15}}>Clear all</Text>
         </TouchableOpacity>
       </View>
       <View style={styles.searchResult}>
@@ -219,22 +338,46 @@ export default SearchScreen = ({route, navigation}) => {
           <FlatList
             data={data}
             renderItem={({item}) => (
-              <TouchableOpacity
-                style={styles.itemContainer}
-                onPress={() =>
-                  navigation.push('HomeProfile', {
-                    userId: item.userId,
-                    userName: item.userName,
-                    followingList: followingList,
-                  })
-                }>
-                <Image source={{uri: item.userImg}} style={styles.image} />
-                <View>
-                  <Text style={{color: '#000'}}>{item.userName}</Text>
-                  {/* <Text>following</Text> */}
-                  <Text>{item.userId}</Text>
-                </View>
-              </TouchableOpacity>
+              <View style={styles.itemContainer}>
+                <TouchableOpacity
+                  style={styles.itemInfor}
+                  onPress={() => {
+                    const isExisted = recent.some(
+                      recent_item => recent_item.userName === item.userName,
+                    );
+                    if (recent && !isExisted) {
+                      writeItemToStorage([...recent, item]);
+                    } else if (!recent) {
+                      writeItemToStorage([item]);
+                    }
+                    navigation.push('HomeProfile', {
+                      userId: item.userId,
+                      userName: item.userName,
+                      followingList: followingList,
+                    });
+                  }}>
+                  {item.userImg ? (
+                    <Image source={{uri: item.userImg}} style={styles.image} />
+                  ) : (
+                    <Image
+                      source={require('../assets/images/search.png')}
+                      style={styles.image}
+                    />
+                  )}
+                  <View>
+                    <Text style={{color: '#000'}}>{item.userName}</Text>
+                    {/* <Text>following</Text> */}
+                    <Text>{item.userId}</Text>
+                  </View>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.btnDelete}
+                  onPress={() => {
+                    handleDelete(item.userId);
+                  }}>
+                  <Icon name="close-outline" size={35} />
+                </TouchableOpacity>
+              </View>
             )}
             keyExtractor={item => item.userId}
             showsVerticalScrollIndicator={false}
@@ -307,13 +450,42 @@ const styles = StyleSheet.create({
   itemContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 1,
+  },
+  itemInfor: {
     paddingVertical: 10,
     paddingHorizontal: 30,
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
   },
   image: {
     width: 50,
     height: 50,
     borderRadius: 25,
     marginRight: 20,
+  },
+  recentBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+  },
+  btnClear: {
+    position: 'absolute',
+    right: 0,
+    marginRight: 10,
+    padding: 4,
+    // borderWidth: 1,
+    // borderRadius: 10,
+    // borderColor: '#ccc'
+  },
+  btnDelete: {
+    width: 70,
+    height: '100%',
+    backgroundColor: 'transparent',
+    position: 'absolute',
+    alignItems: 'center',
+    justifyContent: 'center',
+    right: 0,
   },
 });

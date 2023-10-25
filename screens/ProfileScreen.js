@@ -38,6 +38,11 @@ export default ProfileScreen = ({navigation, route}) => {
   const [isFollowed, setIsFollowed] = useState(null);
   const isFocused = useIsFocused();
 
+  let followingList;
+  if (route.params) {
+    followingList = route.params.followingList;
+  }
+
   const fetchPosts = async () => {
     try {
       const list = [];
@@ -302,6 +307,11 @@ export default ProfileScreen = ({navigation, route}) => {
           );
         }
       });
+      
+    const index = followingList.indexOf(route.params.userId);
+    if (index !== -1) {
+      followingList.splice(index, 1);
+    }
   };
 
   const deleteFirestoreData = (nameCollection, userId) => {
@@ -342,7 +352,13 @@ export default ProfileScreen = ({navigation, route}) => {
   };
 
   const checkIsFollowed = () => {
-    if (route.params.followingList.includes(route.params.userId)) {
+    // if (route.params.followingList.includes(route.params.userId)) {
+    //   setIsFollowed(true);
+    // } else {
+    //   setIsFollowed(false);
+    // }
+
+    if (followingList.includes(route.params.userId)) {
       setIsFollowed(true);
     } else {
       setIsFollowed(false);
@@ -530,13 +546,13 @@ export default ProfileScreen = ({navigation, route}) => {
       </ScrollView>
     </SafeAreaView>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
-    padding: 20
+    padding: 20,
   },
   userImg: {
     height: 150,

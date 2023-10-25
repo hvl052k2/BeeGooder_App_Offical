@@ -1,4 +1,4 @@
-import React, {useContext, useState, useEffect} from 'react';
+import React, {useContext, useState, useEffect, useCallback} from 'react';
 import FormButton from '../components/FormButton';
 import {AuthContext} from '../navigation/AuthProvider.android';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
@@ -34,7 +34,7 @@ export default MessagesScreen = ({navigation}) => {
 
   const isFocused = useIsFocused();
 
-  const fetchMessages = async () => {
+  const fetchMessages = useCallback(async () => {
     try {
       const list = [];
       const querySnapshot = await firestore()
@@ -64,11 +64,11 @@ export default MessagesScreen = ({navigation}) => {
     } catch (error) {
       console.error('Error fetching messages:', error);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchMessages();
-  },[isFocused]);
+  }, [isFocused]);
 
   return (
     <Container>
@@ -93,7 +93,7 @@ export default MessagesScreen = ({navigation}) => {
                   {/* <PostTime>{item.messageTime}</PostTime> */}
                 </UserInfoText>
                 {/* <MessageText>{item.messageText}</MessageText> */}
-                <MessageText>Hello my friend</MessageText>
+                <MessageText numberOfLines={1} ellipsizeMode='tail'>Hello my friend, I love you so much</MessageText>
               </TextSection>
             </UserInfo>
           </Card>

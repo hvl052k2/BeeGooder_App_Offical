@@ -101,8 +101,8 @@ const PostCard = ({item, onDelete, onPress, currentUserData}) => {
           </TouchableOpacity>
           <PostTime>{moment(item.postTime.toDate()).fromNow()}</PostTime>
         </UserInfoText>
-        <View style={{position: 'absolute', right: 5, top: 5}}>
-          <Icon name="bookmark-outline" size={25} />
+        <View style={{position: 'absolute', right: 0, top: 5}}>
+          <Icon name="ellipsis-vertical-outline" size={25} />
         </View>
       </UserInfo>
       {item.post != null ? <PostText>{item.post}</PostText> : null}
@@ -112,12 +112,13 @@ const PostCard = ({item, onDelete, onPress, currentUserData}) => {
         <Devider />
       )} */}
       {item.postImg != null ? (
-        <ProgressiveImage
-          defaultImageSource={require('../assets/images/imageLoading.png')}
-          source={{uri: item.postImg}}
-          style={{width: '100%', height: 250}}
-          resizeMode="cover"
-        />
+        <PostImg source={{uri: item.postImg}} resizeMode='cover'/>
+        // <ProgressiveImage
+        //   defaultImageSource={require('../assets/images/imageLoading.png')}
+        //   source={{uri: item.postImg}}
+        //   style={{width: '100%', height: 250}}
+        //   resizeMode="cover"
+        // />
       ) : (
         <Devider />
       )}

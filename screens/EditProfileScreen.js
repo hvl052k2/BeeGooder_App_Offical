@@ -10,11 +10,6 @@ import {
 } from 'react-native';
 
 import Icon from 'react-native-vector-icons/Ionicons';
-import BottomSheet, {
-  BottomSheetView,
-  BottomSheetModalProvider,
-  BottomSheetModal,
-} from '@gorhom/bottom-sheet';
 import FormButton from '../components/FormButton';
 import ImagePicker from 'react-native-image-crop-picker';
 import Animated from 'react-native-reanimated';

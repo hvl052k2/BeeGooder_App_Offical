@@ -1,4 +1,10 @@
-import React, {useContext, useEffect, useState, useMemo} from 'react';
+import React, {
+  useContext,
+  useEffect,
+  useState,
+  useMemo,
+  useCallback,
+} from 'react';
 import {
   View,
   Text,
@@ -6,7 +12,6 @@ import {
   FlatList,
   Alert,
   ScrollView,
-  
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import PostCard from '../components/PostCard';
@@ -14,8 +19,9 @@ import {Container} from '../styles/FeedStyles';
 import firestore from '@react-native-firebase/firestore';
 import storage from '@react-native-firebase/storage';
 import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
-import { AuthContext } from '../navigation/AuthProvider.android';
+import {AuthContext} from '../navigation/AuthProvider.android';
 import {useIsFocused} from '@react-navigation/native';
+import Modal from 'react-native-modal';
 
 export default HomeScreen = ({navigation}) => {
   const {user, logout} = useContext(AuthContext);
@@ -25,7 +31,7 @@ export default HomeScreen = ({navigation}) => {
   const [followingList, setFollowingList] = useState([]);
   const isFocused = useIsFocused();
 
-  const getFollowingList = async () => {
+  const getFollowingList = useCallback(async () => {
     try {
       const list = [];
       const querySnapshot = await firestore()
@@ -41,7 +47,7 @@ export default HomeScreen = ({navigation}) => {
     } catch (error) {
       console.error('Error fetching messages:', error);
     }
-  };
+  }, []);
 
   const fetchPosts = async () => {
     try {
@@ -92,10 +98,15 @@ export default HomeScreen = ({navigation}) => {
   }, [isFocused]);
 
   useEffect(() => {
-    fetchPosts();
     setDeleted(false);
-    navigation.addListener('focus', () => setLoading(!loading)); //cho phép refresh lại screen khi có thay đổi
-  }, [deleted, navigation, loading]);
+    fetchPosts();
+  }, [deleted]);
+
+  useEffect(() => {
+    navigation.addListener('focus', () => {
+      fetchPosts();
+    });
+  }, [navigation]);
 
   const handleDelete = postId => {
     Alert.alert(

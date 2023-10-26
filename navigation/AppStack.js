@@ -31,7 +31,7 @@ const FeedStack = ({navigation}) => {
   return (
     <Stack.Navigator>
       <Stack.Screen
-        name="BeeGooder"
+        name="HomeScreen"
         component={HomeScreen}
         options={{
           // headerTitleAlign: 'center',

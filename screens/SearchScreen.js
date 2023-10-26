@@ -70,7 +70,6 @@ export default SearchScreen = ({route, navigation}) => {
         setData(JSON.parse(jsonValue));
         setRecent(JSON.parse(jsonValue));
       }
-      console.log('recent: ', recent);
     } catch (e) {
       // error reading value
     }
@@ -81,7 +80,6 @@ export default SearchScreen = ({route, navigation}) => {
       setRecent(newValue);
       const jsonValue = JSON.stringify(newValue);
       await AsyncStorage.setItem('recent', jsonValue);
-      console.log('recent: ', recent);
     } catch (e) {
       // saving error
     }
@@ -155,7 +153,6 @@ export default SearchScreen = ({route, navigation}) => {
       return contains(user, formattedQuery);
     });
     if (filteredData.length != 0) {
-      console.log('filteredData: ', filteredData);
       setData(filteredData);
       setRefresh(!refresh);
     } else {

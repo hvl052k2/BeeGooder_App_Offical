@@ -5,8 +5,8 @@ export const Container = styled.View`
   flex: 1;
   /* align-items: center; */
   background-color: #fff;
-  padding-right: 20px;
-  padding-left: 20px;
+  padding-right: 10px;
+  padding-left: 10px;
   padding-top: 10px;
 `;
 

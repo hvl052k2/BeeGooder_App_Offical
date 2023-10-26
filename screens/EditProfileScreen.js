@@ -158,15 +158,14 @@ const EditProfileScreen = () => {
       });
   };
 
-  const bottomSheetRef = useRef(null);
-  const snapPoints = useMemo(() => ['25%', '50%'], []);
-
   return (
     <View style={[styles.container, {backgroundColor: '#fff'}]}>
       <Modal
         isVisible={isModalVisible}
-        animationIn="fadeInUp"
-        animationOut="fadeOutDown"
+        useNativeDriver={true}
+        hideModalContentWhileAnimating={true}
+        animationIn="fadeIn"
+        animationOut="fadeOut"
         onBackdropPress={() => setIsModalVisible(false)}>
         <View style={styles.panel}>
           <View style={{alignItems: 'center'}}>

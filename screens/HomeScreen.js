@@ -12,6 +12,8 @@ import {
   FlatList,
   Alert,
   ScrollView,
+  ImageBackground,
+  TouchableOpacity,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import PostCard from '../components/PostCard';
@@ -22,14 +24,17 @@ import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import {AuthContext} from '../navigation/AuthProvider.android';
 import {useIsFocused} from '@react-navigation/native';
 import Modal from 'react-native-modal';
+import {windowHeight, windowWidth} from '../utils/Dimensions';
 
-export default HomeScreen = ({navigation}) => {
+export default HomeScreen = ({navigation, route}) => {
   const {user, logout} = useContext(AuthContext);
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [deleted, setDeleted] = useState(false);
   const [followingList, setFollowingList] = useState([]);
   const isFocused = useIsFocused();
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [imageShown, setImageShown] = useState('');
 
   const getFollowingList = useCallback(async () => {
     try {
@@ -186,6 +191,36 @@ export default HomeScreen = ({navigation}) => {
 
   return (
     <Container>
+      <Modal
+        isVisible={isModalVisible}
+        hideModalContentWhileAnimating={true}
+        animationIn={'fadeIn'}
+        animationOut={'fadeOut'}
+        useNativeDriver={true}
+        backdropOpacity={1}
+        style={{margin: 0}}>
+        <View style={{flex: 1}}>
+          <TouchableOpacity
+            onPress={() => {setIsModalVisible(false)}}
+            style={{
+              width: 50,
+              height: 50,
+              alignItems: 'center',
+              justifyContent: 'center',
+              position: 'absolute',
+              lef: 0,
+              top: 0,
+              zIndex: 100,
+            }}>
+            <Icon name="close-outline" size={40} color="#fff" />
+          </TouchableOpacity>
+          <ImageBackground
+            source={{uri: imageShown}}
+            style={{width: '100%', height: windowHeight}}
+            resizeMode="contain"
+          />
+        </View>
+      </Modal>
       {loading ? (
         <ScrollView
           style={{flex: 1}}
@@ -238,7 +273,12 @@ export default HomeScreen = ({navigation}) => {
           renderItem={({item}) => (
             <PostCard
               item={item}
+              screen={route.name}
               onDelete={handleDelete}
+              onShowImage={() => {
+                setIsModalVisible(true);
+                setImageShown(item.postImg);
+              }}
               onPress={() =>
                 navigation.navigate('HomeProfile', {
                   userId: item.userId,

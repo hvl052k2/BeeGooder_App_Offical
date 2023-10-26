@@ -15,6 +15,7 @@ import {
   TouchableOpacity,
   Alert,
   FlatList,
+  ImageBackground,
 } from 'react-native';
 import FormButton from '../components/FormButton';
 import {AuthContext} from '../navigation/AuthProvider.android';
@@ -24,7 +25,8 @@ import firestore from '@react-native-firebase/firestore';
 import storage from '@react-native-firebase/storage';
 import {useIsFocused} from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
-import {run} from 'jest';
+import Modal from 'react-native-modal';
+import {windowHeight, windowWidth} from '../utils/Dimensions';
 
 export default ProfileScreen = ({navigation, route}) => {
   const {user, logout} = useContext(AuthContext);
@@ -37,6 +39,8 @@ export default ProfileScreen = ({navigation, route}) => {
   const [follower, setFollower] = useState([]);
   const [isFollowed, setIsFollowed] = useState(null);
   const isFocused = useIsFocused();
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [imageShown, setImageShown] = useState('');
 
   let followingList;
   if (route.params) {
@@ -307,7 +311,7 @@ export default ProfileScreen = ({navigation, route}) => {
           );
         }
       });
-      
+
     const index = followingList.indexOf(route.params.userId);
     if (index !== -1) {
       followingList.splice(index, 1);
@@ -388,6 +392,38 @@ export default ProfileScreen = ({navigation, route}) => {
 
   return (
     <SafeAreaView style={{flex: 1, backgroundColor: '#fff'}}>
+      <Modal
+        isVisible={isModalVisible}
+        useNativeDriver={true}
+        hideModalContentWhileAnimating={true}
+        backdropOpacity={1}
+        animationIn={'fadeIn'}
+        animationOut={'fadeOut'}
+        style={{margin: 0}}>
+        <View style={{flex: 1}}>
+          <TouchableOpacity
+            onPress={() => {
+              setIsModalVisible(false);
+            }}
+            style={{
+              width: 50,
+              height: 50,
+              alignItems: 'center',
+              justifyContent: 'center',
+              position: 'absolute',
+              lef: 0,
+              top: 0,
+              zIndex: 100,
+            }}>
+            <Icon name="close-outline" size={40} color="#fff" />
+          </TouchableOpacity>
+          <ImageBackground
+            source={{uri: imageShown}}
+            style={{width: '100%', height: windowHeight}}
+            resizeMode="contain"
+          />
+        </View>
+      </Modal>
       <ScrollView
         style={styles.container}
         contentContainerStyle={{
@@ -537,10 +573,15 @@ export default ProfileScreen = ({navigation, route}) => {
         </View>
         {posts.map(item => (
           <PostCard
+            screen={route.name}
             key={item.id}
             item={item}
             currentUserData={currentUserData}
             onDelete={handleDelete}
+            onShowImage={() => {
+              setIsModalVisible(true);
+              setImageShown(item.postImg);
+            }}
           />
         ))}
       </ScrollView>

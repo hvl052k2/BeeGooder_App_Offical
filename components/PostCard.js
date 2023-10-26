@@ -4,6 +4,7 @@ import {AuthContext} from '../navigation/AuthProvider.android';
 import moment from 'moment';
 import ProgressiveImage from './ProgressiveImage';
 import firestore from '@react-native-firebase/firestore';
+import {useNavigation} from '@react-navigation/native';
 
 import {
   View,
@@ -33,9 +34,11 @@ import {
   Devider,
 } from '../styles/FeedStyles';
 
-const PostCard = ({item, onDelete, onPress, currentUserData}) => {
+const PostCard = ({item, onDelete, onPress, currentUserData, onShowImage}) => {
   const {user, logout} = useContext(AuthContext);
   const [userData, setUserData] = useState(null);
+
+  const navigation = useNavigation();
 
   likeIcon = item.liked ? 'heart' : 'heart-outline';
   likeIconColor = item.liked ? '#2e64e5' : '#333';
@@ -112,13 +115,14 @@ const PostCard = ({item, onDelete, onPress, currentUserData}) => {
         <Devider />
       )} */}
       {item.postImg != null ? (
-        <PostImg source={{uri: item.postImg}} resizeMode='cover'/>
-        // <ProgressiveImage
-        //   defaultImageSource={require('../assets/images/imageLoading.png')}
-        //   source={{uri: item.postImg}}
-        //   style={{width: '100%', height: 250}}
-        //   resizeMode="cover"
-        // />
+        <TouchableOpacity onPress={()=>{onShowImage()}}>
+          <ProgressiveImage
+            defaultImageSource={require('../assets/images/imageLoading.png')}
+            source={{uri: item.postImg}}
+            style={{width: '100%', height: 250}}
+            resizeMode="cover"
+          />
+        </TouchableOpacity>
       ) : (
         <Devider />
       )}

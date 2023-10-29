@@ -34,14 +34,13 @@ export default SearchScreen = ({route, navigation}) => {
   const {user} = useContext(AuthContext);
   const [data, setData] = useState([]);
   const [allUserData, setAllUserData] = useState([]);
-  const [fullData, setFullData] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [followings, setFollowings] = useState([]);
   const [followingList, setFollowingList] = useState([]);
   const [error, setError] = useState(null);
   const [refresh, setRefresh] = useState(false);
   const [recent, setRecent] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
 
   const id = useId();
 
@@ -143,6 +142,9 @@ export default SearchScreen = ({route, navigation}) => {
     const filteredData = filter(recent, user => {
       return contains(user, formattedQuery);
     });
+    if(query == ''){
+      setIsSearching(false);
+    }
     setData(filteredData);
   };
 
@@ -154,6 +156,7 @@ export default SearchScreen = ({route, navigation}) => {
     });
     if (filteredData.length != 0) {
       setData(filteredData);
+      setIsSearching(true);
       setRefresh(!refresh);
     } else {
       const isExisted = recent.some(item => item.userName === searchQuery);
@@ -267,6 +270,7 @@ export default SearchScreen = ({route, navigation}) => {
                 backgroundColor="transparent"
                 onPress={() => {
                   setSearchQuery('');
+                  setIsSearching(false);
                   setData(recent);
                 }}
               />
@@ -367,13 +371,15 @@ export default SearchScreen = ({route, navigation}) => {
                     <Text>{item.userId}</Text>
                   </View>
                 </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.btnDelete}
-                  onPress={() => {
-                    handleDelete(item.userId);
-                  }}>
-                  <Icon name="close-outline" size={35} />
-                </TouchableOpacity>
+                {!isSearching ? (
+                  <TouchableOpacity
+                    style={styles.btnDelete}
+                    onPress={() => {
+                      handleDelete(item.userId);
+                    }}>
+                    <Icon name="close-outline" size={35} />
+                  </TouchableOpacity>
+                ) : null}
               </View>
             )}
             keyExtractor={item => item.userId}

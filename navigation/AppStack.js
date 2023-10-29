@@ -27,7 +27,6 @@ const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
 const FeedStack = ({navigation}) => {
-  const [searchInput, setSearchInput] = useState('');
   return (
     <Stack.Navigator>
       <Stack.Screen
@@ -39,6 +38,7 @@ const FeedStack = ({navigation}) => {
           headerTitleStyle: {
             color: '#2e64e5',
             fontFamily: 'Kufam-SemiBoldItalic',
+            // fontFamily: 'Lato-Italic',
             fontSize: 28,
             fontWeight: 'bold',
           },

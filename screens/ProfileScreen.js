@@ -4,6 +4,7 @@ import React, {
   useEffect,
   useCallback,
   useMemo,
+  useRef,
 } from 'react';
 import {
   View,
@@ -27,6 +28,12 @@ import {useIsFocused} from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import Modal from 'react-native-modal';
 import {windowHeight, windowWidth} from '../utils/Dimensions';
+import {TabView, SceneMap, TabBar} from 'react-native-tab-view';
+import {
+  Tabs,
+  MaterialTabBar,
+  MaterialTabItem,
+} from 'react-native-collapsible-tab-view';
 
 export default ProfileScreen = ({navigation, route}) => {
   const {user, logout} = useContext(AuthContext);
@@ -41,6 +48,9 @@ export default ProfileScreen = ({navigation, route}) => {
   const isFocused = useIsFocused();
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [imageShown, setImageShown] = useState('');
+  const [favouriteList, setFavouriteList] = useState([]);
+
+  const ref = useRef();
 
   let followingList;
   if (route.params) {
@@ -69,20 +79,59 @@ export default ProfileScreen = ({navigation, route}) => {
             list.push({
               id: documentSnapshot.id,
               userId,
-              userName: 'Test name',
+              // userName: 'Test name',
               userImg:
                 'https://static.vecteezy.com/system/resources/thumbnails/009/734/564/small/default-avatar-profile-icon-of-social-media-user-vector.jpg',
               postTime: postTime,
               post,
               postImg,
-              liked: false,
-              likes,
+              liked: likes.includes(user.uid),
+              likes: likes,
               comments,
             });
           });
         });
 
       setPosts(list);
+      if (loading) {
+        setLoading(false);
+      }
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
+  const fetchPostsLiked = async () => {
+    try {
+      const list = [];
+      await firestore()
+        .collection('Posts')
+        .orderBy('postTime', 'desc')
+        .get()
+        .then(querySnapshot => {
+          // console.log('Total posts: ', querySnapshot.size);
+
+          querySnapshot.forEach(documentSnapshot => {
+            const {userId, post, postImg, postTime, likes, comments} =
+              documentSnapshot.data();
+            if (likes.includes(route.params ? route.params.userId : user.uid)) {
+              list.push({
+                id: documentSnapshot.id,
+                userId,
+                // userName: 'Test name',
+                userImg:
+                  'https://static.vecteezy.com/system/resources/thumbnails/009/734/564/small/default-avatar-profile-icon-of-social-media-user-vector.jpg',
+                postTime: postTime,
+                post,
+                postImg,
+                liked: likes.includes(user.uid),
+                likes: likes,
+                comments,
+              });
+            }
+          });
+        });
+      setFavouriteList(list);
       if (loading) {
         setLoading(false);
       }
@@ -356,12 +405,6 @@ export default ProfileScreen = ({navigation, route}) => {
   };
 
   const checkIsFollowed = () => {
-    // if (route.params.followingList.includes(route.params.userId)) {
-    //   setIsFollowed(true);
-    // } else {
-    //   setIsFollowed(false);
-    // }
-
     if (followingList.includes(route.params.userId)) {
       setIsFollowed(true);
     } else {
@@ -371,6 +414,7 @@ export default ProfileScreen = ({navigation, route}) => {
 
   useEffect(() => {
     fetchPosts();
+    fetchPostsLiked();
     getFollowings();
     getFollowers();
     if (route.params) {
@@ -381,6 +425,7 @@ export default ProfileScreen = ({navigation, route}) => {
   useEffect(() => {
     getUser();
     fetchPosts();
+    fetchPostsLiked();
     getCurrentUser();
     getFollowings();
     getFollowers();
@@ -390,202 +435,344 @@ export default ProfileScreen = ({navigation, route}) => {
     setDeleted(false);
   }, [deleted, navigation, loading]);
 
-  return (
-    <SafeAreaView style={{flex: 1, backgroundColor: '#fff'}}>
-      <Modal
-        isVisible={isModalVisible}
-        useNativeDriver={true}
-        hideModalContentWhileAnimating={true}
-        backdropOpacity={1}
-        animationIn={'fadeIn'}
-        animationOut={'fadeOut'}
-        style={{margin: 0}}>
-        <View style={{flex: 1}}>
-          <TouchableOpacity
-            onPress={() => {
-              setIsModalVisible(false);
+  const updatePost = async (post, command) => {
+    await firestore()
+      .collection('Posts')
+      .doc(post.id)
+      .get()
+      .then(documentSnapshot => {
+        if (documentSnapshot.exists) {
+          let likes;
+          const likeList = documentSnapshot.data().likes;
+          if (command == 'like') {
+            if (!likeList.includes(user.uid)) {
+              likeList.push(user.uid);
+              likes = likeList;
+            }
+          } else {
+            likes = likeList.filter(item => item != user.uid);
+          }
+          firestore()
+            .collection('Posts')
+            .doc(post.id)
+            .update({
+              userId: post.userId,
+              post: post.post,
+              postImg: post.postImg,
+              postTime: post.postTime,
+              likes: likes,
+              comments: post.comments,
+            })
+            .then(() => {
+              console.log('post updated!');
+            });
+        }
+      });
+  };
+
+  const onLike = post => {
+    if (ref.current.getCurrentIndex() == 1) {
+      const updatedFavouriteList = favouriteList.map(item => {
+        if (item.id === post.id) {
+          return {
+            ...item,
+            liked: !item.liked,
+          };
+        }
+        return item;
+      });
+      setFavouriteList(updatedFavouriteList);
+    }else if(ref.current.getCurrentIndex() == 0){
+      const updatedPosts = posts.map(item => {
+        if (item.id === post.id) {
+          return {
+            ...item,
+            liked: !item.liked,
+          };
+        }
+        return item;
+      });
+      setPosts(updatedPosts);
+    }
+    updatePost(post, 'like');
+  };
+
+  const disLike = post => {
+    if (ref.current.getCurrentIndex() == 1) {
+      const updatedFavouriteList = favouriteList.map(item => {
+        if (item.id === post.id) {
+          return {
+            ...item,
+            liked: !item.liked,
+          };
+        }
+        return item;
+      });
+      setFavouriteList(updatedFavouriteList);
+    } else if(ref.current.getCurrentIndex() == 0){
+      const updatedPosts = posts.map(item => {
+        if (item.id === post.id) {
+          return {
+            ...item,
+            liked: !item.liked,
+          };
+        }
+        return item;
+      });
+      setPosts(updatedPosts);
+    }
+    updatePost(post, 'dislike');
+  };
+
+  const renderHeader = () => {
+    return (
+      <SafeAreaView
+        style={{flex: 1, backgroundColor: '#fff', pointerEvents: 'box-none'}}>
+        <Modal
+          isVisible={isModalVisible}
+          useNativeDriver={true}
+          hideModalContentWhileAnimating={true}
+          backdropOpacity={1}
+          animationIn={'fadeIn'}
+          animationOut={'fadeOut'}
+          style={{margin: 0}}>
+          <View style={{flex: 1}}>
+            <TouchableOpacity
+              onPress={() => {
+                setIsModalVisible(false);
+              }}
+              style={styles.modal}>
+              <Icon name="close-outline" size={40} color="#fff" />
+            </TouchableOpacity>
+            <ImageBackground
+              source={{uri: imageShown}}
+              style={{width: '100%', height: windowHeight}}
+              resizeMode="contain"
+            />
+          </View>
+        </Modal>
+        <View style={styles.container}>
+          <Image
+            style={styles.userImg}
+            source={{
+              uri: userData
+                ? userData.userImg ||
+                  'https://lh5.googleusercontent.com/-b0PKyNuQv5s/AAAAAAAAAAI/AAAAAAAAAAA/AMZuuclxAM4M1SCBGAO7Rp-QP6zgBEUkOQ/s96-c/photo.jpg'
+                : 'https://lh5.googleusercontent.com/-b0PKyNuQv5s/AAAAAAAAAAI/AAAAAAAAAAA/AMZuuclxAM4M1SCBGAO7Rp-QP6zgBEUkOQ/s96-c/photo.jpg',
             }}
-            style={{
-              width: 50,
-              height: 50,
-              alignItems: 'center',
-              justifyContent: 'center',
-              position: 'absolute',
-              lef: 0,
-              top: 0,
-              zIndex: 100,
-            }}>
-            <Icon name="close-outline" size={40} color="#fff" />
-          </TouchableOpacity>
-          <ImageBackground
-            source={{uri: imageShown}}
-            style={{width: '100%', height: windowHeight}}
-            resizeMode="contain"
           />
-        </View>
-      </Modal>
-      <ScrollView
-        style={styles.container}
-        contentContainerStyle={{
-          justifyContent: 'center',
-          alignItems: 'center',
-        }}
-        showsVerticalScrollIndicator={false}>
-        <Image
-          style={styles.userImg}
-          source={{
-            uri: userData
-              ? userData.userImg ||
-                'https://lh5.googleusercontent.com/-b0PKyNuQv5s/AAAAAAAAAAI/AAAAAAAAAAA/AMZuuclxAM4M1SCBGAO7Rp-QP6zgBEUkOQ/s96-c/photo.jpg'
-              : 'https://lh5.googleusercontent.com/-b0PKyNuQv5s/AAAAAAAAAAI/AAAAAAAAAAA/AMZuuclxAM4M1SCBGAO7Rp-QP6zgBEUkOQ/s96-c/photo.jpg',
-          }}
-        />
-        <Text style={styles.userName}>
-          {userData ? userData.fname || 'Test' : 'Test'}{' '}
-          {userData ? userData.lname || 'User' : 'User'}
-        </Text>
-        <Text>{route.params ? route.params.userId : user.uid}</Text>
-        <Text style={styles.aboutUser}>
-          {userData ? userData.about || 'No details added.' : ''}
-        </Text>
-        <View style={styles.userBtnWrapper}>
-          {route.params ? (
-            route.params.userId == user.uid ? (
+          <Text style={styles.userName}>
+            {userData ? userData.fname || 'Test' : 'Test'}{' '}
+            {userData ? userData.lname || 'User' : 'User'}
+          </Text>
+          <Text>{route.params ? route.params.userId : user.uid}</Text>
+          <Text style={styles.aboutUser}>
+            {userData ? userData.about || 'No details added.' : ''}
+          </Text>
+          <View style={styles.userBtnWrapper}>
+            {route.params ? (
+              route.params.userId == user.uid ? (
+                <>
+                  <TouchableOpacity
+                    style={styles.userBtn}
+                    onPress={() => navigation.push('EditProfileScreen')}>
+                    <Text style={styles.userBtnTxt}>Edit</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.userBtn} onPress={logout}>
+                    <Text style={styles.userBtnTxt}>Logout</Text>
+                  </TouchableOpacity>
+                </>
+              ) : (
+                <>
+                  <TouchableOpacity style={styles.userBtn} onPress={() => {}}>
+                    <Text
+                      style={styles.userBtnTxt}
+                      onPress={() => {
+                        message(),
+                          navigation.navigate('Chat', {
+                            userId: route.params.userId,
+                            userName: userData
+                              ? userData.fname
+                                ? userData.fname + ' ' + userData.lname
+                                : 'New User'
+                              : 'New User',
+                            userImg: userData.userImg
+                              ? userData.userImg
+                              : 'https://lh5.googleusercontent.com/-b0PKyNuQv5s/AAAAAAAAAAI/AAAAAAAAAAA/AMZuuclxAM4M1SCBGAO7Rp-QP6zgBEUkOQ/s96-c/photo.jpg',
+                          });
+                      }}>
+                      Message
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.userBtn}
+                    onPress={() => {
+                      if (isFollowed) {
+                        unFollow();
+                        setIsFollowed(false);
+                      } else {
+                        follow();
+                        setIsFollowed(true);
+                      }
+                    }}>
+                    {isFollowed ? (
+                      <Icon name="people-outline" size={20} />
+                    ) : (
+                      <Text style={styles.userBtnTxt}>Follow</Text>
+                    )}
+                  </TouchableOpacity>
+                </>
+              )
+            ) : (
               <>
                 <TouchableOpacity
                   style={styles.userBtn}
-                  onPress={() => navigation.push('EditProfileScreen')}>
+                  onPress={() => navigation.navigate('EditProfileScreen')}>
                   <Text style={styles.userBtnTxt}>Edit</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.userBtn} onPress={logout}>
                   <Text style={styles.userBtnTxt}>Logout</Text>
                 </TouchableOpacity>
               </>
-            ) : (
-              <>
-                <TouchableOpacity style={styles.userBtn} onPress={() => {}}>
-                  <Text
-                    style={styles.userBtnTxt}
-                    onPress={() => {
-                      message(),
-                        navigation.navigate('Chat', {
-                          userId: route.params.userId,
-                          userName: userData
-                            ? userData.fname
-                              ? userData.fname + ' ' + userData.lname
-                              : 'New User'
-                            : 'New User',
-                          userImg: userData.userImg
-                            ? userData.userImg
-                            : 'https://lh5.googleusercontent.com/-b0PKyNuQv5s/AAAAAAAAAAI/AAAAAAAAAAA/AMZuuclxAM4M1SCBGAO7Rp-QP6zgBEUkOQ/s96-c/photo.jpg',
-                        });
-                    }}>
-                    Message
-                  </Text>
-                </TouchableOpacity>
+            )}
+          </View>
+          <View style={styles.userInfoWrapper}>
+            <TouchableOpacity style={styles.userInfoItem} disabled={true}>
+              <Text style={styles.userInfoTitle}>{posts.length}</Text>
+              <Text style={styles.userInfoSubTitle}>
+                {posts.length > 1 ? 'Posts' : 'Post'}
+              </Text>
+            </TouchableOpacity>
 
-                <TouchableOpacity
-                  style={styles.userBtn}
-                  onPress={() => {
-                    if (isFollowed) {
-                      unFollow();
-                      setIsFollowed(false);
-                    } else {
-                      follow();
-                      setIsFollowed(true);
-                    }
-                  }}>
-                  {isFollowed ? (
-                    <Icon name="people-outline" size={20} />
-                  ) : (
-                    <Text style={styles.userBtnTxt}>Follow</Text>
-                  )}
-                </TouchableOpacity>
-              </>
-            )
-          ) : (
-            <>
-              <TouchableOpacity
-                style={styles.userBtn}
-                onPress={() => navigation.navigate('EditProfileScreen')}>
-                <Text style={styles.userBtnTxt}>Edit</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.userBtn} onPress={logout}>
-                <Text style={styles.userBtnTxt}>Logout</Text>
-              </TouchableOpacity>
-            </>
+            <TouchableOpacity
+              style={styles.userInfoItem}
+              onPress={() => {
+                if (route.params) {
+                  navigation.push('FriendsFollowersScreen', {
+                    userId: route.params.userId,
+                    followingList: following,
+                  });
+                } else {
+                  navigation.push('FollowersScreen', {
+                    userId: user.uid,
+                    followingList: following,
+                  });
+                }
+              }}>
+              <Text style={styles.userInfoTitle}>{follower}</Text>
+              <Text style={styles.userInfoSubTitle}>
+                {follower.length > 1 ? 'Followers' : 'Follower'}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.userInfoItem}
+              onPress={() => {
+                if (route.params) {
+                  navigation.push('FriendsFollowingsScreen', {
+                    userId: route.params.userId,
+                    followingList: following,
+                  });
+                } else {
+                  navigation.push('FollowingsScreen', {
+                    userId: user.uid,
+                    followingList: following,
+                  });
+                }
+              }}>
+              <Text style={styles.userInfoTitle}>{following.length}</Text>
+              <Text style={styles.userInfoSubTitle}>
+                {following.length > 1 ? 'Followings' : 'Following'}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.userInfoItem}>
+              <Text style={styles.userInfoTitle}>1B</Text>
+              <Text style={styles.userInfoSubTitle}>Liked</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </SafeAreaView>
+    );
+  };
+
+  const renderTabBar = props => {
+    return (
+      <MaterialTabBar
+        {...props}
+        activeColor="#000"
+        inactiveColor="gray"
+        labelStyle={{fontWeight: 'bold'}}
+        TabItemComponent={props => (
+          <MaterialTabItem {...props} pressColor="#fff" />
+        )}
+      />
+    );
+  };
+
+  return (
+    <Tabs.Container
+      renderHeader={renderHeader}
+      renderTabBar={renderTabBar}
+      ref={ref}>
+      <Tabs.Tab name="Posts" label="Posts" index={0}>
+        <Tabs.FlatList
+          data={posts}
+          renderItem={({item}) => (
+            <PostCard
+              item={item}
+              onDelete={handleDelete}
+              currentUserData={currentUserData}
+              onShowImage={() => {
+                setIsModalVisible(true);
+                setImageShown(item.postImg);
+              }}
+              onLike={() => {
+                if (item.liked) {
+                  console.log('dislike');
+                  disLike(item);
+                } else {
+                  console.log('like');
+                  onLike(item);
+                }
+              }}
+            />
           )}
-        </View>
-        <View style={styles.userInfoWrapper}>
-          <TouchableOpacity style={styles.userInfoItem} disabled={true}>
-            <Text style={styles.userInfoTitle}>{posts.length}</Text>
-            <Text style={styles.userInfoSubTitle}>
-              {posts.length > 1 ? 'Posts' : 'Post'}
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.userInfoItem}
-            onPress={() => {
-              if (route.params) {
-                navigation.push('FriendsFollowersScreen', {
-                  userId: route.params.userId,
-                  followingList: following,
-                });
-              } else {
-                navigation.push('FollowersScreen', {
-                  userId: user.uid,
-                  followingList: following,
-                });
-              }
-            }}>
-            <Text style={styles.userInfoTitle}>{follower}</Text>
-            <Text style={styles.userInfoSubTitle}>
-              {follower.length > 1 ? 'Followers' : 'Follower'}
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.userInfoItem}
-            onPress={() => {
-              if (route.params) {
-                navigation.push('FriendsFollowingsScreen', {
-                  userId: route.params.userId,
-                  followingList: following,
-                });
-              } else {
-                navigation.push('FollowingsScreen', {
-                  userId: user.uid,
-                  followingList: following,
-                });
-              }
-            }}>
-            <Text style={styles.userInfoTitle}>{following.length}</Text>
-            <Text style={styles.userInfoSubTitle}>
-              {following.length > 1 ? 'Followings' : 'Following'}
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.userInfoItem}>
-            <Text style={styles.userInfoTitle}>1B</Text>
-            <Text style={styles.userInfoSubTitle}>Liked</Text>
-          </TouchableOpacity>
-        </View>
-        {posts.map(item => (
-          <PostCard
-            screen={route.name}
-            key={item.id}
-            item={item}
-            currentUserData={currentUserData}
-            onDelete={handleDelete}
-            onShowImage={() => {
-              setIsModalVisible(true);
-              setImageShown(item.postImg);
-            }}
-          />
-        ))}
-      </ScrollView>
-    </SafeAreaView>
+          keyExtractor={item => item.id}
+          showsVerticalScrollIndicator={false}
+          padding={10}
+        />
+      </Tabs.Tab>
+      <Tabs.Tab name="Favourites" label="Favourites" index={1}>
+        <Tabs.FlatList
+          data={favouriteList}
+          renderItem={({item}) => (
+            <PostCard
+              item={item}
+              onDelete={handleDelete}
+              currentUserData={currentUserData}
+              onShowImage={() => {
+                setIsModalVisible(true);
+                setImageShown(item.postImg);
+              }}
+              onLike={() => {
+                if (item.liked) {
+                  console.log('dislike');
+                  disLike(item);
+                } else {
+                  console.log('like');
+                  onLike(item);
+                }
+              }}
+            />
+          )}
+          keyExtractor={item => item.id}
+          showsVerticalScrollIndicator={false}
+          padding={10}
+        />
+      </Tabs.Tab>
+    </Tabs.Container>
   );
 };
 
@@ -593,7 +780,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
-    padding: 20,
+    paddingTop: 20,
+    alignItems: 'center',
   },
   userImg: {
     height: 150,
@@ -603,8 +791,7 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 18,
     fontWeight: 'bold',
-    marginTop: 10,
-    marginBottom: 10,
+    marginVertical: 10,
   },
   aboutUser: {
     fontSize: 12,
@@ -634,7 +821,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     width: '100%',
-    marginVertical: 20,
+    // marginVertical: 20,
+    marginBottom: 10,
   },
   userInfoItem: {
     justifyContent: 'center',
@@ -649,5 +837,21 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#666',
     textAlign: 'center',
+  },
+  modal: {
+    width: 50,
+    height: 50,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'absolute',
+    lef: 0,
+    top: 0,
+    zIndex: 100,
+  },
+  postsTab: {
+    flex: 1,
+    backgroundColor: '#fff',
+    padding: 10,
+    // alignItems: 'center',
   },
 });

@@ -35,6 +35,7 @@ export default HomeScreen = ({navigation, route}) => {
   const isFocused = useIsFocused();
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [imageShown, setImageShown] = useState('');
+  const [postliked, setPostLiked] = useState('');
 
   const getFollowingList = useCallback(async () => {
     try {
@@ -58,7 +59,7 @@ export default HomeScreen = ({navigation, route}) => {
     try {
       const list = [];
       await firestore()
-        .collection('Posts', 'desc')
+        .collection('Posts')
         .orderBy('postTime', 'desc')
         .get()
         .then(querySnapshot => {
@@ -70,14 +71,14 @@ export default HomeScreen = ({navigation, route}) => {
             list.push({
               id: documentSnapshot.id,
               userId,
-              userName: 'Test name',
+              // userName: 'Test name',
               userImg:
                 'https://static.vecteezy.com/system/resources/thumbnails/009/734/564/small/default-avatar-profile-icon-of-social-media-user-vector.jpg',
               postTime: postTime,
               post,
               postImg,
-              liked: false,
-              likes,
+              liked: likes.includes(user.uid),
+              likes: likes,
               comments,
             });
           });
@@ -189,6 +190,65 @@ export default HomeScreen = ({navigation, route}) => {
     return null;
   };
 
+  const updatePost = async (post, command) => {
+    await firestore()
+      .collection('Posts')
+      .doc(post.id)
+      .get()
+      .then(documentSnapshot => {
+        if (documentSnapshot.exists) {
+          let likes;
+          const likeList = documentSnapshot.data().likes;
+          if (command == 'like') {
+            if (!likeList.includes(user.uid)) {
+              likeList.push(user.uid);
+              likes = likeList;
+            }
+          } else {
+            likes = likeList.filter(item => item != user.uid);
+          }
+          firestore().collection('Posts').doc(post.id).update({
+            userId: post.userId,
+            post: post.post,
+            postImg: post.postImg,
+            postTime: post.postTime,
+            likes: likes,
+            comments: post.comments,
+          }).then(()=>{
+            console.log('post updated!')
+          })
+        }
+      });
+  };
+
+  const onLike = post => {
+    const updatedPosts = posts.map(item => {
+      if (item.id === post.id) {
+        return {
+          ...item,
+          liked: !item.liked,
+        };
+      }
+      return item;
+    });
+    setPosts(updatedPosts);
+    updatePost(post, 'like');
+  };
+
+  const disLike = post => {
+    const updatedPosts = posts.map(item => {
+      if (item.id === post.id) {
+        return {
+          ...item,
+          liked: !item.liked,
+        };
+      }
+      return item;
+    });
+    setPosts(updatedPosts);
+    updatePost(post, 'dislike');
+  };
+
   return (
     <Container>
       <Modal
@@ -201,7 +261,9 @@ export default HomeScreen = ({navigation, route}) => {
         style={{margin: 0}}>
         <View style={{flex: 1}}>
           <TouchableOpacity
-            onPress={() => {setIsModalVisible(false)}}
+            onPress={() => {
+              setIsModalVisible(false);
+            }}
             style={{
               width: 50,
               height: 50,
@@ -273,11 +335,19 @@ export default HomeScreen = ({navigation, route}) => {
           renderItem={({item}) => (
             <PostCard
               item={item}
-              screen={route.name}
               onDelete={handleDelete}
               onShowImage={() => {
                 setIsModalVisible(true);
                 setImageShown(item.postImg);
+              }}
+              onLike={() => {
+                if (item.liked) {
+                  console.log('dislike');
+                  disLike(item);
+                } else {
+                  console.log('like');
+                  onLike(item);
+                }
               }}
               onPress={() =>
                 navigation.navigate('HomeProfile', {

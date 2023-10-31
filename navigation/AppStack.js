@@ -11,6 +11,7 @@ import {createStackNavigator} from '@react-navigation/stack';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import Icon from 'react-native-vector-icons/Ionicons';
 import {getFocusedRouteNameFromRoute} from '@react-navigation/native';
+import {createMaterialTopTabNavigator} from '@react-navigation/material-top-tabs';
 
 // import screens
 import HomeScreen from '../screens/HomeScreen';
@@ -22,16 +23,56 @@ import EditProfileScreen from '../screens/EditProfileScreen';
 import FollowingsScreen from '../screens/FollowingsScreen';
 import FollowersScreen from '../screens/FollowersScreen';
 import SearchScreen from '../screens/SearchScreen';
+import HumanPostsScreen from '../screens/toptapscreens/HumanPostsScreen';
+import AnimalPostsScreen from '../screens/toptapscreens/AnimalPostsScreen';
+import UtilPostsScreen from '../screens/toptapscreens/UtilPostsScreen';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
+const TopTab = createMaterialTopTabNavigator();
+
+const TopTabHome = () => {
+  return (
+    <TopTab.Navigator
+      screenOptions={({route, navigation}) => ({
+        tabBarIcon: ({color, focused, size}) => {
+          let iconName;
+          if (route.name === 'All') {
+            iconName = focused ? 'apps' : 'apps-outline';
+          } else if (route.name === 'Human') {
+            iconName = focused ? 'people' : 'people-outline';
+          } else if (route.name === 'Animal') {
+            iconName = focused ? 'paw' : 'paw-outline';
+          } else if (route.name === 'Util') {
+            iconName = focused ? 'wallet' : 'wallet-outline';
+          }
+          return <Icon name={iconName} size={25} color={color} />;
+        },
+        tabBarActiveTintColor: '#2e64e5',
+        tabBarLabelStyle: {
+          textTransform: 'none',
+          fontWeight: 'bold',
+          fontFamily: 'Kufam-SemiBoldItalic',
+        },
+        tabBarShowLabel: false,
+        tabBarInactiveTintColor: "gray",
+        tabBarPressColor: '#fff'
+      })}>
+      <TopTab.Screen name="All" component={HomeScreen}/>
+      <TopTab.Screen name="Human" component={HumanPostsScreen} />
+      <TopTab.Screen name="Animal" component={AnimalPostsScreen} />
+      <TopTab.Screen name="Util" component={UtilPostsScreen} />
+    </TopTab.Navigator>
+  );
+};
 
 const FeedStack = ({navigation}) => {
   return (
     <Stack.Navigator>
       <Stack.Screen
-        name="HomeScreen"
-        component={HomeScreen}
+        name="TopTabHome"
+        // component={HomeScreen}
+        component={TopTabHome}
         options={{
           // headerTitleAlign: 'center',
           headerTitle: 'BeBetter',
@@ -540,6 +581,16 @@ const AppStack = ({route}) => {
         tabBarActiveTintColor: '#2e64e5',
         // tabBarInactiveTintColor: "gray"
       })}>
+      {/* <Tab.Screen
+        name="Home"
+        component={TopTabNavigator}
+        options={({route}) => ({
+          tabBarLabel: 'Home',
+          // headerShown: false,
+          tabBarStyle: {display: getTabBarVisibility(route) ? 'flex' : 'none'},
+        })}
+      /> */}
+
       <Tab.Screen
         name="Home"
         component={FeedStack}

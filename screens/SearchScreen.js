@@ -291,8 +291,8 @@ export default SearchScreen = ({route, navigation}) => {
         </View>
         <TouchableOpacity>
           <Icon
-            name="filter-outline"
-            size={30}
+            name="funnel-outline"
+            size={28}
             backgroundColor="#fff"
             style={{marginLeft: 10}}
             onPress={sortByName}

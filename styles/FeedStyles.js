@@ -80,14 +80,14 @@ export const Interaction = styled.TouchableOpacity`
   justify-content: center;
   border-radius: 5px;
   padding: 2px 5px;
-  background-color: ${props => (props.active ? '#2e64e515' : 'transparent')};
+  background-color: ${props => (props.active ? '#fce9ec' : 'transparent')};
 `;
 
 export const InteractionText = styled.Text`
   font-size: 12px;
   font-family: 'Lato-Regular';
   font-weight: bold;
-  color: ${props => (props.active ? '#2e64e5' : '#333')};
+  color: ${props => (props.active ? '#e73b54' : '#333')};
   margin-top: 5px;
   margin-left: 5px;
 `;

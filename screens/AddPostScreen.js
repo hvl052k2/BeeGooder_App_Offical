@@ -65,8 +65,8 @@ export default AddPostScreen = () => {
         post: post,
         postImg: imageUrl,
         postTime: firestore.Timestamp.fromDate(new Date()),
-        likes: null,
-        comments: null,
+        likes: [],
+        comments: [],
       })
       .then(() => {
         console.log('Post added!');

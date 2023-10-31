@@ -34,14 +34,14 @@ import {
   Devider,
 } from '../styles/FeedStyles';
 
-const PostCard = ({item, onDelete, onPress, currentUserData, onShowImage}) => {
+const PostCard = ({item, onDelete, onPress, currentUserData, onShowImage, onLike}) => {
   const {user, logout} = useContext(AuthContext);
   const [userData, setUserData] = useState(null);
 
   const navigation = useNavigation();
 
   likeIcon = item.liked ? 'heart' : 'heart-outline';
-  likeIconColor = item.liked ? '#2e64e5' : '#333';
+  likeIconColor = item.liked ? '#e73b54' : '#333';
 
   if (item.likes == 1) {
     likeText = '1 Like';
@@ -109,13 +109,11 @@ const PostCard = ({item, onDelete, onPress, currentUserData, onShowImage}) => {
         </View>
       </UserInfo>
       {item.post != null ? <PostText>{item.post}</PostText> : null}
-      {/* {item.postImg != null ? (
-        <PostImg source={{uri: item.postImg}} />
-      ) : (
-        <Devider />
-      )} */}
       {item.postImg != null ? (
-        <TouchableOpacity onPress={()=>{onShowImage()}}>
+        <TouchableOpacity
+          onPress={() => {
+            onShowImage();
+          }}>
           <ProgressiveImage
             defaultImageSource={require('../assets/images/imageLoading.png')}
             source={{uri: item.postImg}}
@@ -127,13 +125,17 @@ const PostCard = ({item, onDelete, onPress, currentUserData, onShowImage}) => {
         <Devider />
       )}
       <InteractionWrapper>
-        <Interaction active={item.liked}>
+        <Interaction active={item.liked} onPress={onLike}>
           <Icon name={likeIcon} size={25} color={likeIconColor} />
           <InteractionText active={item.liked}>{likeText}</InteractionText>
         </Interaction>
         <Interaction>
           <Icon name="chatbubble-outline" size={25} />
           <InteractionText>{commentText}</InteractionText>
+        </Interaction>
+        <Interaction>
+          <Icon name="arrow-redo-outline" size={27} />
+          <InteractionText>Share</InteractionText>
         </Interaction>
         {user.uid == item.userId ? (
           <Interaction

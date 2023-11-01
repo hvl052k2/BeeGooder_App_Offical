@@ -472,9 +472,14 @@ export default ProfileScreen = ({navigation, route}) => {
     if (ref.current.getCurrentIndex() == 1) {
       const updatedFavouriteList = favouriteList.map(item => {
         if (item.id === post.id) {
+          const likeList = item.likes;
+          if (!likeList.includes(user.uid)) {
+            likeList.push(user.uid);
+          }
           return {
             ...item,
             liked: !item.liked,
+            likes: likeList,
           };
         }
         return item;
@@ -483,9 +488,14 @@ export default ProfileScreen = ({navigation, route}) => {
     } else if (ref.current.getCurrentIndex() == 0) {
       const updatedPosts = posts.map(item => {
         if (item.id === post.id) {
+          const likeList = item.likes;
+          if (!likeList.includes(user.uid)) {
+            likeList.push(user.uid);
+          }
           return {
             ...item,
             liked: !item.liked,
+            likes: likeList,
           };
         }
         return item;
@@ -499,9 +509,11 @@ export default ProfileScreen = ({navigation, route}) => {
     if (ref.current.getCurrentIndex() == 1) {
       const updatedFavouriteList = favouriteList.map(item => {
         if (item.id === post.id) {
+          const likeList = item.likes;
           return {
             ...item,
             liked: !item.liked,
+            likes: likeList.filter(item => item != user.uid),
           };
         }
         return item;
@@ -510,9 +522,11 @@ export default ProfileScreen = ({navigation, route}) => {
     } else if (ref.current.getCurrentIndex() == 0) {
       const updatedPosts = posts.map(item => {
         if (item.id === post.id) {
+          const likeList = item.likes;
           return {
             ...item,
             liked: !item.liked,
+            likes: likeList.filter(item => item != user.uid),
           };
         }
         return item;

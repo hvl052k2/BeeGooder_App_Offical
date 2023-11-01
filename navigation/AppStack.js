@@ -26,6 +26,7 @@ import SearchScreen from '../screens/SearchScreen';
 import HumanPostsScreen from '../screens/toptapscreens/HumanPostsScreen';
 import AnimalPostsScreen from '../screens/toptapscreens/AnimalPostsScreen';
 import UtilPostsScreen from '../screens/toptapscreens/UtilPostsScreen';
+import VideoCallPage from '../screens/VideoCallPage';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -55,10 +56,10 @@ const TopTabHome = () => {
           fontFamily: 'Kufam-SemiBoldItalic',
         },
         tabBarShowLabel: false,
-        tabBarInactiveTintColor: "gray",
-        tabBarPressColor: '#fff'
+        tabBarInactiveTintColor: 'gray',
+        tabBarPressColor: '#fff',
       })}>
-      <TopTab.Screen name="All" component={HomeScreen}/>
+      <TopTab.Screen name="All" component={HomeScreen} />
       <TopTab.Screen name="Human" component={HumanPostsScreen} />
       <TopTab.Screen name="Animal" component={AnimalPostsScreen} />
       <TopTab.Screen name="Util" component={UtilPostsScreen} />
@@ -170,6 +171,8 @@ const FeedStack = ({navigation}) => {
         }}
       />
 
+      <Stack.Screen name="VideoCallPage" component={VideoCallPage} />
+
       <Stack.Screen
         name="Chat"
         component={ChatScreen}
@@ -204,7 +207,13 @@ const FeedStack = ({navigation}) => {
           ),
           headerRight: () => (
             <View style={{flexDirection: 'row'}}>
-              <TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => {
+                  navigation.navigate('VideoCallPage', {
+                    userId: route.params.userId,
+                    userName: route.params.userName,
+                  });
+                }}>
                 <Icon
                   name="call"
                   size={28}
@@ -235,6 +244,7 @@ const FeedStack = ({navigation}) => {
           ),
         })}
       />
+
 
       <Stack.Screen
         name="FriendsFollowingsScreen"
@@ -327,7 +337,13 @@ const MessagesStack = ({navigation}) => (
         ),
         headerRight: () => (
           <View style={{flexDirection: 'row'}}>
-            <TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => {
+                navigation.navigate('VideoCallScreen', {
+                  userId: route.params.userId,
+                  userName: route.params.userName,
+                });
+              }}>
               <Icon
                 name="call"
                 size={28}
@@ -358,6 +374,7 @@ const MessagesStack = ({navigation}) => (
         ),
       })}
     />
+    <Stack.Screen name="VideoCallScreen" component={VideoCallPage} />
   </Stack.Navigator>
 );
 

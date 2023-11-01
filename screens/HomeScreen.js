@@ -207,16 +207,20 @@ export default HomeScreen = ({navigation, route}) => {
           } else {
             likes = likeList.filter(item => item != user.uid);
           }
-          firestore().collection('Posts').doc(post.id).update({
-            userId: post.userId,
-            post: post.post,
-            postImg: post.postImg,
-            postTime: post.postTime,
-            likes: likes,
-            comments: post.comments,
-          }).then(()=>{
-            console.log('post updated!')
-          })
+          firestore()
+            .collection('Posts')
+            .doc(post.id)
+            .update({
+              userId: post.userId,
+              post: post.post,
+              postImg: post.postImg,
+              postTime: post.postTime,
+              likes: likes,
+              comments: post.comments,
+            })
+            .then(() => {
+              console.log('post updated!');
+            });
         }
       });
   };
@@ -224,9 +228,14 @@ export default HomeScreen = ({navigation, route}) => {
   const onLike = post => {
     const updatedPosts = posts.map(item => {
       if (item.id === post.id) {
+        const likeList = item.likes;
+        if (!likeList.includes(user.uid)) {
+          likeList.push(user.uid);
+        }
         return {
           ...item,
           liked: !item.liked,
+          likes: likeList
         };
       }
       return item;
@@ -238,9 +247,11 @@ export default HomeScreen = ({navigation, route}) => {
   const disLike = post => {
     const updatedPosts = posts.map(item => {
       if (item.id === post.id) {
+        const likeList = item.likes;
         return {
           ...item,
           liked: !item.liked,
+          likes: likeList.filter(item => item != user.uid),
         };
       }
       return item;

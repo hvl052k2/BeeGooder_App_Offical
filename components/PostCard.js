@@ -32,21 +32,32 @@ import {
   Interaction,
   InteractionText,
   Devider,
+  FloatFunctionContainer,
+  FloatFunctionButton,
+  FloatFunctionText,
 } from '../styles/FeedStyles';
 
-const PostCard = ({item, onDelete, onPress, currentUserData, onShowImage, onLike}) => {
+const PostCard = ({
+  item,
+  onDelete,
+  onPress,
+  currentUserData,
+  onShowImage,
+  onLike,
+}) => {
   const {user, logout} = useContext(AuthContext);
   const [userData, setUserData] = useState(null);
+  const [showFloatContainer, setShowFloatContainer] = useState(false);
 
   const navigation = useNavigation();
 
   likeIcon = item.liked ? 'heart' : 'heart-outline';
   likeIconColor = item.liked ? '#e73b54' : '#333';
 
-  if (item.likes == 1) {
+  if (item.likes.length == 1) {
     likeText = '1 Like';
-  } else if (item.likes > 1) {
-    likeText = item.likes + ' Likes';
+  } else if (item.likes.length > 1) {
+    likeText = item.likes.length + ' Likes';
   } else {
     likeText = 'Like';
   }
@@ -105,7 +116,39 @@ const PostCard = ({item, onDelete, onPress, currentUserData, onShowImage, onLike
           <PostTime>{moment(item.postTime.toDate()).fromNow()}</PostTime>
         </UserInfoText>
         <View style={{position: 'absolute', right: 0, top: 5}}>
-          <Icon name="ellipsis-vertical-outline" size={25} />
+          <TouchableOpacity
+            onPress={() => {
+              setShowFloatContainer(!showFloatContainer);
+            }}>
+            <Icon
+              name={
+                showFloatContainer
+                  ? 'ellipsis-vertical'
+                  : 'ellipsis-vertical-outline'
+              }
+              size={25}
+              color={showFloatContainer ? '#2e64e5' : 'gray'}
+            />
+          </TouchableOpacity>
+          {showFloatContainer ? (
+            <FloatFunctionContainer>
+              {user.uid == item.userId ? (
+                <FloatFunctionButton
+                  onPress={() => {
+                    onDelete(item.id);
+                  }}>
+                  <FloatFunctionText>Delete</FloatFunctionText>
+                </FloatFunctionButton>
+              ) : null}
+
+              <FloatFunctionButton>
+                <FloatFunctionText>Save</FloatFunctionText>
+              </FloatFunctionButton>
+              <FloatFunctionButton>
+                <FloatFunctionText>Another...</FloatFunctionText>
+              </FloatFunctionButton>
+            </FloatFunctionContainer>
+          ) : null}
         </View>
       </UserInfo>
       {item.post != null ? <PostText>{item.post}</PostText> : null}
@@ -137,14 +180,6 @@ const PostCard = ({item, onDelete, onPress, currentUserData, onShowImage, onLike
           <Icon name="arrow-redo-outline" size={27} />
           <InteractionText>Share</InteractionText>
         </Interaction>
-        {user.uid == item.userId ? (
-          <Interaction
-            onPress={() => {
-              onDelete(item.id);
-            }}>
-            <Icon name="trash-outline" size={25} />
-          </Interaction>
-        ) : null}
       </InteractionWrapper>
     </Card>
   );

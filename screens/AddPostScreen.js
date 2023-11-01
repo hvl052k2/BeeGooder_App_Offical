@@ -6,12 +6,14 @@ import {
   Button,
   Alert,
   ActivityIndicator,
+  TouchableOpacity,
 } from 'react-native';
 import ActionButton from 'react-native-action-button';
 import Icon from 'react-native-vector-icons/Ionicons';
 import ImagePicker from 'react-native-image-crop-picker';
 import storage from '@react-native-firebase/storage';
 import firestore from '@react-native-firebase/firestore';
+import DropDownPicker from 'react-native-dropdown-picker';
 import {AuthContext} from '../navigation/AuthProvider.android';
 
 import {
@@ -29,17 +31,31 @@ export default AddPostScreen = () => {
   const [uploading, setUploading] = useState(false);
   const [transferred, setTransferred] = useState(0);
   const [post, setPost] = useState(null);
+  const [showInformation, setShowInformation] = useState(false);
+  const [isOpenCategories, setIsOpenCategories] = useState(false);
+  const [value, setValue] = useState(null);
+  const [items, setItems] = useState([
+    {label: 'Human', value: 'human'},
+    {label: 'Animal', value: 'animal'},
+    {label: 'Util', value: 'util'},
+  ]);
 
   const takePhotoFromCamera = () => {
     ImagePicker.openCamera({
       // width: 1200,
       // height: 780,
       cropping: true,
-    }).then(image => {
-      console.log(image);
-      const imageUri = Platform.OS == 'ios' ? image.sourceURL : image.path;
-      setImage(imageUri);
-    });
+    })
+      .then(image => {
+        console.log(image);
+        const imageUri = Platform.OS == 'ios' ? image.sourceURL : image.path;
+        setImage(imageUri);
+      })
+      .catch(error => {
+        if (error.code === 'E_PICKER_CANCELLED') {
+          return false;
+        }
+      });
   };
 
   const choosePhotoFromLibrary = () => {
@@ -47,11 +63,17 @@ export default AddPostScreen = () => {
       // width: 1200,
       // height: 780,
       cropping: true,
-    }).then(image => {
-      console.log(image);
-      const imageUri = Platform.OS == 'ios' ? image.sourceURL : image.path;
-      setImage(imageUri);
-    });
+    })
+      .then(image => {
+        console.log(image);
+        const imageUri = Platform.OS == 'ios' ? image.sourceURL : image.path;
+        setImage(imageUri);
+      })
+      .catch(error => {
+        if (error.code === 'E_PICKER_CANCELLED') {
+          return false;
+        }
+      });
   };
 
   const submitPost = async () => {
@@ -67,6 +89,7 @@ export default AddPostScreen = () => {
         postTime: firestore.Timestamp.fromDate(new Date()),
         likes: [],
         comments: [],
+        category: value ? value : 'human',
       })
       .then(() => {
         console.log('Post added!');
@@ -142,9 +165,41 @@ export default AddPostScreen = () => {
             <ActivityIndicator size="large" color="#0000ff" />
           </StatusWrapper>
         ) : (
-          <SubmitBtn onPress={submitPost}>
-            <SubmitBtnText>Post</SubmitBtnText>
-          </SubmitBtn>
+          <View style={{flexDirection: 'row'}}>
+            <TouchableOpacity
+              style={{marginRight: 10}}
+              onPress={() => {
+                setShowInformation(!showInformation);
+              }}>
+              <Icon name="information-circle" size={25} />
+            </TouchableOpacity>
+            {showInformation ? (
+              <View style={styles.information}>
+                <Text>
+                  Choosing the right category helps increase the chances of
+                  success in searching.
+                </Text>
+                <View style={styles.viewDependent} />
+              </View>
+            ) : null}
+
+            <DropDownPicker
+              open={isOpenCategories}
+              value={value}
+              items={items}
+              setOpen={setIsOpenCategories}
+              setValue={setValue}
+              setItems={setItems}
+              placeholder={'Choose a category.'}
+              containerStyle={{
+                width: 200,
+                marginRight: 10,
+              }}
+            />
+            <SubmitBtn onPress={submitPost}>
+              <SubmitBtnText>Post</SubmitBtnText>
+            </SubmitBtn>
+          </View>
         )}
       </InputWrapper>
       <ActionButton buttonColor="rgba(231,76,60,1)">
@@ -175,5 +230,28 @@ const styles = StyleSheet.create({
     fontSize: 20,
     height: 22,
     color: 'white',
+  },
+  information: {
+    padding: 5,
+    position: 'absolute',
+    width: 200,
+    height: 70,
+    backgroundColor: '#e8e8e8',
+    bottom: 60,
+    left: -20,
+    borderRadius: 10,
+    borderWidth: 0.5,
+  },
+  viewDependent: {
+    width: 15,
+    height: 15,
+    backgroundColor: '#fff',
+    transform: [{rotate: '45deg'}],
+    position: 'absolute',
+    bottom: -8,
+    left: 25,
+    backgroundColor: '#e8e8e8',
+    borderBottomWidth: 0.5,
+    borderRightWidth: 0.5,
   },
 });

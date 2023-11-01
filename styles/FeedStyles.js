@@ -1,5 +1,5 @@
 import {styled} from 'styled-components/native';
-import { windowHeight, windowWidth } from '../utils/Dimensions';
+import {windowHeight, windowWidth} from '../utils/Dimensions';
 
 export const Container = styled.View`
   flex: 1;
@@ -50,8 +50,7 @@ export const PostTime = styled.Text`
 export const PostText = styled.Text`
   font-size: 14px;
   font-family: 'Lato-Regular';
-  padding: 0 15px;
-  margin-bottom: 15px;
+  padding: 5px 15px 10px 15px;
 `;
 
 export const PostImg = styled.ImageBackground`
@@ -91,3 +90,30 @@ export const InteractionText = styled.Text`
   margin-top: 5px;
   margin-left: 5px;
 `;
+
+export const FloatFunctionContainer = styled.View`
+  position: absolute;
+  width: 120px;
+  right: 25px;
+  top: 15px;
+  z-index: 2;
+  overflow: hidden;
+  border-radius: 10px;
+  border-top-width: 1px;
+  border-right-width: 1px;
+  border-left-width: 1px;
+  border-color: #ccc;
+`;
+
+export const FloatFunctionButton = styled.TouchableOpacity`
+  align-items: center;
+  justify-content: center;
+  background-color: #fff;
+  border-bottom-width: 1px;
+  border-color: #ccc;
+  height: 50px;
+`;
+
+export const FloatFunctionText = styled.Text`
+  font-size: 16px;
+`

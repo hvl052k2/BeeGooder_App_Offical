@@ -75,12 +75,13 @@ const FeedStack = ({navigation}) => {
         component={TopTabHome}
         options={{
           // headerTitleAlign: 'center',
-          headerTitle: 'BeBetter',
+          headerTitle: 'iFinder',
           headerTitleStyle: {
             color: '#2e64e5',
             fontFamily: 'Kufam-SemiBoldItalic',
+            letterSpacing: 2,
             // fontFamily: 'Lato-Italic',
-            fontSize: 28,
+            fontSize: 30,
             fontWeight: 'bold',
           },
           headerStyle: {

@@ -49,6 +49,7 @@ export default ProfileScreen = ({navigation, route}) => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [imageShown, setImageShown] = useState('');
   const [favouriteList, setFavouriteList] = useState([]);
+  const [totalLike, setTotalLike] = useState(0);
 
   const ref = useRef();
 
@@ -69,11 +70,6 @@ export default ProfileScreen = ({navigation, route}) => {
           // console.log('Total posts: ', querySnapshot.size);
 
           querySnapshot.forEach(documentSnapshot => {
-            // console.log(
-            //   'User ID: ',
-            //   documentSnapshot.id,
-            //   documentSnapshot.data(),
-            // );
             const {userId, post, postImg, postTime, likes, comments} =
               documentSnapshot.data();
             list.push({
@@ -92,6 +88,8 @@ export default ProfileScreen = ({navigation, route}) => {
           });
         });
 
+      total = list.reduce((total, post) => total + post.likes.length, 0);
+      setTotalLike(total);
       setPosts(list);
       if (loading) {
         setLoading(false);
@@ -482,7 +480,7 @@ export default ProfileScreen = ({navigation, route}) => {
         return item;
       });
       setFavouriteList(updatedFavouriteList);
-    }else if(ref.current.getCurrentIndex() == 0){
+    } else if (ref.current.getCurrentIndex() == 0) {
       const updatedPosts = posts.map(item => {
         if (item.id === post.id) {
           return {
@@ -509,7 +507,7 @@ export default ProfileScreen = ({navigation, route}) => {
         return item;
       });
       setFavouriteList(updatedFavouriteList);
-    } else if(ref.current.getCurrentIndex() == 0){
+    } else if (ref.current.getCurrentIndex() == 0) {
       const updatedPosts = posts.map(item => {
         if (item.id === post.id) {
           return {
@@ -565,7 +563,7 @@ export default ProfileScreen = ({navigation, route}) => {
             {userData ? userData.fname || 'Test' : 'Test'}{' '}
             {userData ? userData.lname || 'User' : 'User'}
           </Text>
-          <Text>{route.params ? route.params.userId : user.uid}</Text>
+          <Text>ID: {route.params ? route.params.userId : user.uid}</Text>
           <Text style={styles.aboutUser}>
             {userData ? userData.about || 'No details added.' : ''}
           </Text>
@@ -638,13 +636,6 @@ export default ProfileScreen = ({navigation, route}) => {
             )}
           </View>
           <View style={styles.userInfoWrapper}>
-            <TouchableOpacity style={styles.userInfoItem} disabled={true}>
-              <Text style={styles.userInfoTitle}>{posts.length}</Text>
-              <Text style={styles.userInfoSubTitle}>
-                {posts.length > 1 ? 'Posts' : 'Post'}
-              </Text>
-            </TouchableOpacity>
-
             <TouchableOpacity
               style={styles.userInfoItem}
               onPress={() => {
@@ -687,8 +678,17 @@ export default ProfileScreen = ({navigation, route}) => {
               </Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.userInfoItem}>
-              <Text style={styles.userInfoTitle}>1B</Text>
+            <TouchableOpacity
+              style={styles.userInfoItem}
+              onPress={() => {
+                Alert.alert(
+                  'Congratulations!',
+                  `${userData.fname} ${userData.lname} has received ${
+                    totalLike > 1 ? totalLike + ' likes' : totalLike + ' like'
+                  } in total posts`,
+                );
+              }}>
+              <Text style={styles.userInfoTitle}>{totalLike}</Text>
               <Text style={styles.userInfoSubTitle}>Liked</Text>
             </TouchableOpacity>
           </View>
@@ -716,7 +716,16 @@ export default ProfileScreen = ({navigation, route}) => {
       renderHeader={renderHeader}
       renderTabBar={renderTabBar}
       ref={ref}>
-      <Tabs.Tab name="Posts" label="Posts" index={0}>
+      <Tabs.Tab
+        name="Posts"
+        label={
+          posts.length > 1
+            ? `${posts.length} Posts`
+            : posts.length == 1
+            ? '1 Post'
+            : 'Post'
+        }
+        index={0}>
         <Tabs.FlatList
           data={posts}
           renderItem={({item}) => (
@@ -744,7 +753,16 @@ export default ProfileScreen = ({navigation, route}) => {
           padding={10}
         />
       </Tabs.Tab>
-      <Tabs.Tab name="Favourites" label="Favourites" index={1}>
+      <Tabs.Tab
+        name="Favourites"
+        label={
+          favouriteList.length > 1
+            ? `${favouriteList.length} Favourites`
+            : favouriteList.length == 1
+            ? '1 Favourite'
+            : 'Favourite'
+        }
+        index={1}>
         <Tabs.FlatList
           data={favouriteList}
           renderItem={({item}) => (

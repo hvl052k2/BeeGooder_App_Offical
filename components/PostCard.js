@@ -44,6 +44,7 @@ const PostCard = ({
   currentUserData,
   onShowImage,
   onLike,
+  onComment
 }) => {
   const {user, logout} = useContext(AuthContext);
   const [userData, setUserData] = useState(null);
@@ -62,10 +63,10 @@ const PostCard = ({
     likeText = 'Like';
   }
 
-  if (item.comments == 1) {
+  if (item.comments.length == 1) {
     commentText = '1 Comment';
-  } else if (item.comments > 1) {
-    commentText = item.comments + ' Comments';
+  } else if (item.comments.length > 1) {
+    commentText = item.comments.length + ' Comments';
   } else {
     commentText = 'Comment';
   }
@@ -172,7 +173,8 @@ const PostCard = ({
           <Icon name={likeIcon} size={25} color={likeIconColor} />
           <InteractionText active={item.liked}>{likeText}</InteractionText>
         </Interaction>
-        <Interaction>
+        <Interaction
+          onPress={onComment}>
           <Icon name="chatbubble-outline" size={25} />
           <InteractionText>{commentText}</InteractionText>
         </Interaction>

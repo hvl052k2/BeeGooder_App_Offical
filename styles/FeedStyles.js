@@ -79,7 +79,7 @@ export const Interaction = styled.TouchableOpacity`
   justify-content: center;
   border-radius: 5px;
   padding: 2px 5px;
-  background-color: ${props => (props.active ? '#fce9ec' : 'transparent')};
+  /* background-color: ${props => (props.active ? '#fce9ec' : 'transparent')}; */
 `;
 
 export const InteractionText = styled.Text`

@@ -454,12 +454,7 @@ export default ProfileScreen = ({navigation, route}) => {
             .collection('Posts')
             .doc(post.id)
             .update({
-              userId: post.userId,
-              post: post.post,
-              postImg: post.postImg,
-              postTime: post.postTime,
               likes: likes,
-              comments: post.comments,
             })
             .then(() => {
               console.log('post updated!');

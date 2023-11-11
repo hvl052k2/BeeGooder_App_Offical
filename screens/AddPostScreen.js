@@ -89,7 +89,7 @@ export default AddPostScreen = () => {
         postTime: firestore.Timestamp.fromDate(new Date()),
         likes: [],
         comments: [],
-        category: value ? value : 'human',
+        category: value ? value : '',
       })
       .then(() => {
         console.log('Post added!');

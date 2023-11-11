@@ -53,6 +53,14 @@ export default ChatScreen = ({route}) => {
     showEmojis();
   }, [isOpenEmojiPicker]);
 
+  useEffect(() => {
+    fetchMessageList();
+  }, []);
+
+  useEffect(() => {
+    fetchMessageList();
+  }, [deletedMessage]);
+
   const showEmojis = () => {
     Animated.timing(heightValue, {
       toValue: isOpenEmojiPicker ? 400 : 0,
@@ -179,14 +187,6 @@ export default ChatScreen = ({route}) => {
       setMessageList(allMessages);
     });
   };
-
-  useEffect(() => {
-    fetchMessageList();
-  }, []);
-
-  useEffect(() => {
-    fetchMessageList();
-  }, [deletedMessage]);
 
   const onSend = async (messages = []) => {
     const msg = messages[0];

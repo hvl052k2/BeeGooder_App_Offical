@@ -28,13 +28,16 @@ import {
   MessageText,
 } from '../styles/MessageStyles';
 
-export default MessagesScreen = ({navigation}) => {
+export default MessagesScreen = ({navigation, route}) => {
   const {user} = useContext(AuthContext);
   const [messages, setMessages] = useState([]);
-
   const isFocused = useIsFocused();
 
-  const fetchMessages = useCallback(async () => {
+  useEffect(() => {
+    fetchMessages();
+  }, [isFocused]);
+
+  const fetchMessages = async () => {
     try {
       const list = [];
       const querySnapshot = await firestore()
@@ -45,30 +48,35 @@ export default MessagesScreen = ({navigation}) => {
 
       for (const documentSnapshot of querySnapshot.docs) {
         const userId = documentSnapshot.data().userId;
-        const snapShot = await firestore()
+        await firestore()
           .collection('users')
           .doc(userId)
-          .get();
-        const {fname, lname, userImg} = snapShot.data();
-
-        list.push({
-          userId: snapShot.id,
-          userName: fname ? `${fname} ${lname}` : 'New User',
-          userImg: userImg
-            ? userImg
-            : 'https://lh5.googleusercontent.com/-b0PKyNuQv5s/AAAAAAAAAAI/AAAAAAAAAAA/AMZuuclxAM4M1SCBGAO7Rp-QP6zgBEUkOQ/s96-c/photo.jpg',
-        });
+          .get()
+          .then(async inforSnapShot => {
+            const {fname, lname, userImg} = inforSnapShot.data();
+            await firestore()
+              .collection('chats')
+              .doc(user.uid + userId)
+              .collection('messages')
+              .orderBy('createdAt', 'desc')
+              .get()
+              .then(querySnapshot => {
+                list.push({
+                  userId: inforSnapShot.id,
+                  userName: fname ? `${fname} ${lname}` : 'New User',
+                  userImg: userImg
+                    ? userImg
+                    : 'https://lh5.googleusercontent.com/-b0PKyNuQv5s/AAAAAAAAAAI/AAAAAAAAAAA/AMZuuclxAM4M1SCBGAO7Rp-QP6zgBEUkOQ/s96-c/photo.jpg',
+                  messageText: querySnapshot.docs[0].data().text,
+                });
+              });
+          });
       }
-
       setMessages(list);
     } catch (error) {
       console.error('Error fetching messages:', error);
     }
-  }, []);
-
-  useEffect(() => {
-    fetchMessages();
-  }, [isFocused]);
+  };
 
   return (
     <Container>
@@ -93,7 +101,9 @@ export default MessagesScreen = ({navigation}) => {
                   {/* <PostTime>{item.messageTime}</PostTime> */}
                 </UserInfoText>
                 {/* <MessageText>{item.messageText}</MessageText> */}
-                <MessageText numberOfLines={1} ellipsizeMode='tail'>Hello my friend, I love you so much</MessageText>
+                <MessageText numberOfLines={1} ellipsizeMode="tail">
+                  {item.messageText}
+                </MessageText>
               </TextSection>
             </UserInfo>
           </Card>

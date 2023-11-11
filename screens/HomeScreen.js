@@ -4,17 +4,23 @@ import React, {
   useState,
   useMemo,
   useCallback,
+  useRef,
 } from 'react';
 import {
   View,
   Text,
+  TextInput,
   StyleSheet,
   FlatList,
   Alert,
   ScrollView,
   ImageBackground,
   TouchableOpacity,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
+
 import Icon from 'react-native-vector-icons/Ionicons';
 import PostCard from '../components/PostCard';
 import {Container} from '../styles/FeedStyles';
@@ -32,10 +38,9 @@ export default HomeScreen = ({navigation, route}) => {
   const [loading, setLoading] = useState(true);
   const [deleted, setDeleted] = useState(false);
   const [followingList, setFollowingList] = useState([]);
-  const isFocused = useIsFocused();
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [imageShown, setImageShown] = useState('');
-  const [postliked, setPostLiked] = useState('');
+  const isFocused = useIsFocused();
 
   const getFollowingList = useCallback(async () => {
     try {
@@ -112,6 +117,9 @@ export default HomeScreen = ({navigation, route}) => {
     navigation.addListener('focus', () => {
       fetchPosts();
     });
+    navigation.addListener('state', ()=>{
+      fetchPosts();
+    })
   }, [navigation]);
 
   const handleDelete = postId => {
@@ -135,9 +143,9 @@ export default HomeScreen = ({navigation, route}) => {
     );
   };
 
-  const deletePost = postId => {
+  const deletePost = async postId => {
     console.log('post id was deleted: ', postId);
-    firestore()
+    await firestore()
       .collection('Posts')
       .doc(postId)
       .get()
@@ -211,12 +219,7 @@ export default HomeScreen = ({navigation, route}) => {
             .collection('Posts')
             .doc(post.id)
             .update({
-              userId: post.userId,
-              post: post.post,
-              postImg: post.postImg,
-              postTime: post.postTime,
               likes: likes,
-              comments: post.comments,
             })
             .then(() => {
               console.log('post updated!');
@@ -235,7 +238,7 @@ export default HomeScreen = ({navigation, route}) => {
         return {
           ...item,
           liked: !item.liked,
-          likes: likeList
+          likes: likeList,
         };
       }
       return item;
@@ -275,16 +278,7 @@ export default HomeScreen = ({navigation, route}) => {
             onPress={() => {
               setIsModalVisible(false);
             }}
-            style={{
-              width: 50,
-              height: 50,
-              alignItems: 'center',
-              justifyContent: 'center',
-              position: 'absolute',
-              lef: 0,
-              top: 0,
-              zIndex: 100,
-            }}>
+            style={styles.btnCloseModal}>
             <Icon name="close-outline" size={40} color="#fff" />
           </TouchableOpacity>
           <ImageBackground
@@ -294,6 +288,7 @@ export default HomeScreen = ({navigation, route}) => {
           />
         </View>
       </Modal>
+
       {loading ? (
         <ScrollView
           style={{flex: 1}}
@@ -304,17 +299,32 @@ export default HomeScreen = ({navigation, route}) => {
               <View style={{marginLeft: 20}}>
                 <View style={{width: 120, height: 20, borderRadius: 4}} />
                 <View
-                  style={{marginTop: 6, width: 80, height: 20, borderRadius: 4}}
+                  style={{
+                    marginTop: 6,
+                    width: 80,
+                    height: 20,
+                    borderRadius: 4,
+                  }}
                 />
               </View>
             </View>
             <View style={{marginTop: 10, marginBottom: 30}}>
               <View style={{width: 300, height: 20, borderRadius: 4}} />
               <View
-                style={{marginTop: 6, width: 250, height: 20, borderRadius: 4}}
+                style={{
+                  marginTop: 6,
+                  width: 250,
+                  height: 20,
+                  borderRadius: 4,
+                }}
               />
               <View
-                style={{marginTop: 6, width: 350, height: 200, borderRadius: 4}}
+                style={{
+                  marginTop: 6,
+                  width: 350,
+                  height: 200,
+                  borderRadius: 4,
+                }}
               />
             </View>
           </SkeletonPlaceholder>
@@ -325,17 +335,32 @@ export default HomeScreen = ({navigation, route}) => {
               <View style={{marginLeft: 20}}>
                 <View style={{width: 120, height: 20, borderRadius: 4}} />
                 <View
-                  style={{marginTop: 6, width: 80, height: 20, borderRadius: 4}}
+                  style={{
+                    marginTop: 6,
+                    width: 80,
+                    height: 20,
+                    borderRadius: 4,
+                  }}
                 />
               </View>
             </View>
             <View style={{marginTop: 10, marginBottom: 30}}>
               <View style={{width: 300, height: 20, borderRadius: 4}} />
               <View
-                style={{marginTop: 6, width: 250, height: 20, borderRadius: 4}}
+                style={{
+                  marginTop: 6,
+                  width: 250,
+                  height: 20,
+                  borderRadius: 4,
+                }}
               />
               <View
-                style={{marginTop: 6, width: 350, height: 200, borderRadius: 4}}
+                style={{
+                  marginTop: 6,
+                  width: 350,
+                  height: 200,
+                  borderRadius: 4,
+                }}
               />
             </View>
           </SkeletonPlaceholder>
@@ -360,10 +385,14 @@ export default HomeScreen = ({navigation, route}) => {
                   onLike(item);
                 }
               }}
+              onComment={() => {
+                navigation.navigate('CommentsScreen', {
+                  item: item,
+                });
+              }}
               onPress={() =>
                 navigation.navigate('HomeProfile', {
                   userId: item.userId,
-                  userName: item.userName,
                   followingList: followingList,
                 })
               }
@@ -378,3 +407,60 @@ export default HomeScreen = ({navigation, route}) => {
     </Container>
   );
 };
+
+const styles = StyleSheet.create({
+  btnCloseModal: {
+    width: 50,
+    height: 50,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'absolute',
+    lef: 0,
+    top: 0,
+    zIndex: 100,
+  },
+  cmtInput: {
+    backgroundColor: '#fff',
+    flex: 1,
+    borderColor: '#ccc',
+    borderRadius: 20,
+    borderWidth: 0.5,
+    marginRight: 10,
+    paddingHorizontal: 10,
+  },
+  cmtField: {
+    // backgroundColor: 'pink',
+    // justifyContent: 'flex-end',
+    height: 80,
+    paddingHorizontal: 10,
+    overflow: 'hidden',
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderTopWidth: 0.5,
+    borderColor: '#ccc',
+  },
+  contentContainer: {
+    backgroundColor: '#fff',
+  },
+  input: {
+    width: '90%',
+    marginTop: 8,
+    marginBottom: 10,
+    borderRadius: 10,
+    fontSize: 16,
+    lineHeight: 20,
+    padding: 8,
+    backgroundColor: 'rgba(151, 151, 151, 0.25)',
+  },
+  footerContainer: {
+    padding: 12,
+    margin: 12,
+    borderRadius: 12,
+    backgroundColor: '#80f',
+  },
+  footerText: {
+    textAlign: 'center',
+    color: 'white',
+    fontWeight: '800',
+  },
+});

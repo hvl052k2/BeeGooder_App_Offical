@@ -27,6 +27,7 @@ import HumanPostsScreen from '../screens/toptapscreens/HumanPostsScreen';
 import AnimalPostsScreen from '../screens/toptapscreens/AnimalPostsScreen';
 import UtilPostsScreen from '../screens/toptapscreens/UtilPostsScreen';
 import VideoCallPage from '../screens/VideoCallPage';
+import CommentsScreen from '../screens/CommentsScreen';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -114,6 +115,8 @@ const FeedStack = ({navigation}) => {
           ),
         }}
       />
+
+      <Stack.Screen name="CommentsScreen" component={CommentsScreen} options={{headerTitle: 'Comment screen'}}/>
 
       <Stack.Screen
         name="AddPostScreen"
@@ -244,7 +247,6 @@ const FeedStack = ({navigation}) => {
           ),
         })}
       />
-
 
       <Stack.Screen
         name="FriendsFollowingsScreen"
@@ -572,7 +574,8 @@ const AppStack = ({route}) => {
       routeName == 'AddPostScreen' ||
       routeName == 'EditProfileScreen' ||
       routeName == 'Chat' ||
-      routeName == 'SearchScreen'
+      routeName == 'SearchScreen' || 
+      routeName == 'CommentsScreen'
     ) {
       return false;
     }

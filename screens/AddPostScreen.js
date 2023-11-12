@@ -47,8 +47,9 @@ export default AddPostScreen = () => {
       cropping: true,
     })
       .then(image => {
-        console.log(image);
+        // console.log(image);
         const imageUri = Platform.OS == 'ios' ? image.sourceURL : image.path;
+        // console.log('imageUri: ', imageUri)
         setImage(imageUri);
       })
       .catch(error => {

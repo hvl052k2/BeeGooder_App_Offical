@@ -581,6 +581,7 @@ const AppStack = ({route}) => {
     }
     return true;
   };
+  
   return (
     <Tab.Navigator
       screenOptions={({route, navigation}) => ({

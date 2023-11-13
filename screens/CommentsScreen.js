@@ -278,47 +278,40 @@ export default CommentsScreen = ({navigation, route}) => {
   };
 
   const onAddCommentReply = post => {
-    // Tìm phần tử có id = replyTo.id
+    // cập nhật setCommentList
     const commentToChange = commentList.find(item => item.id === replyTo.id);
-    // console.log(commentToChange);
-
-    // Nếu tìm thấy, thay đổi giá trị
     if (commentToChange) {
       commentToChange.commentReplies.push({
         id: cmtId,
         userId: user.uid,
         userName: `${userData.fname} ${userData.lname}`,
         userImg: userData.userImg,
-        commentText: commentText, 
+        commentText: commentText,
         commentTime: firestore.Timestamp.fromDate(new Date()),
         sendToUserName: commentSelected.userName,
       });
     }
 
-    // setPost({
-    //   ...post,
-    //   comments: [
-    //     ...post.comments,
-    //     {
-    //       userId: user.uid,
-    //       commentText: commentText,
-    //       commentTime: firestore.Timestamp.fromDate(new Date()),
-    //       commentReplies: [],
-    //     },
-    //   ],
-    // });
+    // cập nhật setPost
+    const commentReplyToChange = post.comments.find(
+      item => item.id === replyTo.id,
+    );
+    commentReplyToChange.commentReplies.push({
+      id: cmtId,
+      userId: user.uid,
+      commentText: commentText,
+      commentTime: firestore.Timestamp.fromDate(new Date()),
+    });
     updatePostComment(post, 'addCommentReply');
   };
 
   const onDeleteComment = post => {
     const tempt_1 = commentList.filter(item => item.id !== commentSelected.id);
-    console.log('tempt_1: ', tempt_1);
     setCommentList(tempt_1);
 
     const tempt_2 = post.comments.filter(
       item => item.id !== commentSelected.id,
     );
-    console.log('tempt_2: ', tempt_2);
 
     setPost({...post, comments: tempt_2});
 

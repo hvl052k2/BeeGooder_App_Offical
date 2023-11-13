@@ -5,6 +5,7 @@ import React, {
   useMemo,
   useCallback,
   useRef,
+  useId,
 } from 'react';
 import {
   View,
@@ -33,6 +34,7 @@ import {
   CommentContainerWrapper,
   CommentInputField,
   CommentTime,
+  UserImageReply,
 } from '../styles/CommentStyles';
 
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -50,6 +52,7 @@ import BottomSheet, {BottomSheetBackdrop} from '@gorhom/bottom-sheet';
 export default CommentsScreen = ({navigation, route}) => {
   const {user, logout} = useContext(AuthContext);
   const [commentText, setCommentText] = useState('');
+  // const [commentTextReply, setCommentTextReply] = useState('');
   const [commentList, setCommentList] = useState([]);
   const [userData, setUserData] = useState([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -57,17 +60,23 @@ export default CommentsScreen = ({navigation, route}) => {
   const [isLoading, setIsLoading] = useState(true);
   const [post, setPost] = useState(route.params.item);
   const [commentSelected, setCommentSelected] = useState('');
+  const [replyTo, setReplyTo] = useState(null);
+  const [cmtId, setCmtId] = useState(null);
+
+  const id = useId();
 
   const commentInputRef = useRef();
+
   useEffect(() => {
     getUser();
     fetchComments();
     getPostName();
-
+    generateId();
     const keyboardDidHideSubscription = Keyboard.addListener(
       'keyboardDidHide',
       () => {
         commentInputRef.current.blur();
+        setReplyTo(null);
       },
     );
     return () => {
@@ -104,16 +113,46 @@ export default CommentsScreen = ({navigation, route}) => {
           .collection('users')
           .doc(comments[i].userId)
           .get()
-          .then(snapShot => {
+          .then(async snapShot => {
             const {fname, lname, userImg} = snapShot.data();
+            const listReply = [];
+            for (let j = 0; j < comments[i].commentReplies.length; j++) {
+              await firestore()
+                .collection('users')
+                .doc(comments[i].commentReplies[j].userId)
+                .get()
+                .then(async snapShot => {
+                  const {fname, lname, userImg} = snapShot.data();
+
+                  const sendToUserData = (
+                    await firestore()
+                      .collection('users')
+                      .doc(comments[i].commentReplies[j].sendTo)
+                      .get()
+                  ).data();
+                  const sendToUserfname = sendToUserData.fname;
+                  const sendToUserlname = sendToUserData.lname;
+
+                  listReply.push({
+                    id: comments[i].commentReplies[j].id,
+                    userId: comments[i].commentReplies[j].userId,
+                    userName: `${fname} ${lname}`,
+                    sendToUserName: `${sendToUserfname} ${sendToUserlname}`,
+                    userImg: userImg,
+                    commentText: comments[i].commentReplies[j].commentText,
+                    commentTime: comments[i].commentReplies[j].commentTime,
+                  });
+                });
+            }
+
             list.push({
-              id: i,
+              id: comments[i].id,
               userId: comments[i].userId,
               userName: `${fname} ${lname}`,
               userImg: userImg,
               commentText: comments[i].commentText,
               commentTime: comments[i].commentTime,
-              commentReplies: comments[i].commentReplies,
+              commentReplies: listReply,
             });
           });
       }
@@ -127,6 +166,7 @@ export default CommentsScreen = ({navigation, route}) => {
           return 0;
         }
       });
+      // console.log(list);
       setCommentList(list);
     }
     setIsLoading(false);
@@ -144,27 +184,57 @@ export default CommentsScreen = ({navigation, route}) => {
       });
   };
 
+  const generateId = () => {
+    const idRandom = id + Math.floor(Math.random() * 1000000001);
+    setCmtId(idRandom);
+  };
+
   // Cập nhật comment trên firebase
   const updatePostComment = async (post, command) => {
     await firestore()
       .collection('Posts')
       .doc(post.id)
       .get()
-      .then(documentSnapshot => {
+      .then(async documentSnapshot => {
         if (documentSnapshot.exists) {
           const comments = documentSnapshot.data().comments;
+
           if (command == 'addComment') {
             comments.push({
+              id: cmtId,
               userId: user.uid,
               commentText: commentText,
               commentTime: firestore.Timestamp.fromDate(new Date()),
-              commentReplies: []
+              commentReplies: [],
             });
-          } else {
-            comments.splice(commentSelected.id, 1);
           }
 
-          firestore()
+          if (command == 'deleteComment') {
+            const indexToRemove = comments.findIndex(
+              item => item.id === commentSelected.id,
+            );
+            if (indexToRemove !== -1) {
+              comments.splice(indexToRemove, 1);
+            }
+          }
+
+          if (command == 'addCommentReply') {
+            const commentToChange = comments.find(
+              item => item.id === commentSelected.id,
+            );
+
+            // console.log('commentToChange: ', commentToChange);
+            commentToChange.commentReplies.push({
+              id: cmtId,
+              userId: user.uid,
+              commentText: commentText,
+              commentTime: firestore.Timestamp.fromDate(new Date()),
+              sendBy: user.uid,
+              sendTo: commentSelected.userId,
+            });
+          }
+
+          await firestore()
             .collection('Posts')
             .doc(post.id)
             .update({
@@ -182,7 +252,7 @@ export default CommentsScreen = ({navigation, route}) => {
     setCommentList([
       ...commentList,
       {
-        id: commentList.length + 1,
+        id: cmtId,
         userId: user.uid,
         userName: `${userData.fname} ${userData.lname}`,
         userImg: userData.userImg,
@@ -196,6 +266,7 @@ export default CommentsScreen = ({navigation, route}) => {
       comments: [
         ...post.comments,
         {
+          id: cmtId,
           userId: user.uid,
           commentText: commentText,
           commentTime: firestore.Timestamp.fromDate(new Date()),
@@ -206,19 +277,55 @@ export default CommentsScreen = ({navigation, route}) => {
     updatePostComment(post, 'addComment');
   };
 
-  const onDeleteComment = (post) => {
-    const tempt_1 = commentList;
-    tempt_1.splice(post.id, 1);
-    setCommentList(tempt_1); 
+  const onAddCommentReply = post => {
+    // Tìm phần tử có id = replyTo.id
+    const commentToChange = commentList.find(item => item.id === replyTo.id);
+    // console.log(commentToChange);
 
-    const tempt_2 = post.comments;
-    tempt_2.splice(commentSelected.id, 1);
+    // Nếu tìm thấy, thay đổi giá trị
+    if (commentToChange) {
+      commentToChange.commentReplies.push({
+        id: cmtId,
+        userId: user.uid,
+        userName: `${userData.fname} ${userData.lname}`,
+        userImg: userData.userImg,
+        commentText: commentText, 
+        commentTime: firestore.Timestamp.fromDate(new Date()),
+        sendToUserName: commentSelected.userName,
+      });
+    }
+
+    // setPost({
+    //   ...post,
+    //   comments: [
+    //     ...post.comments,
+    //     {
+    //       userId: user.uid,
+    //       commentText: commentText,
+    //       commentTime: firestore.Timestamp.fromDate(new Date()),
+    //       commentReplies: [],
+    //     },
+    //   ],
+    // });
+    updatePostComment(post, 'addCommentReply');
+  };
+
+  const onDeleteComment = post => {
+    const tempt_1 = commentList.filter(item => item.id !== commentSelected.id);
+    console.log('tempt_1: ', tempt_1);
+    setCommentList(tempt_1);
+
+    const tempt_2 = post.comments.filter(
+      item => item.id !== commentSelected.id,
+    );
+    console.log('tempt_2: ', tempt_2);
+
     setPost({...post, comments: tempt_2});
 
     updatePostComment(post, 'deleteComment');
   };
 
-  const handleDeleteComment = (post) => {
+  const handleDeleteComment = post => {
     Alert.alert(
       'Delete comment',
       'Are you sure?',
@@ -428,47 +535,120 @@ export default CommentsScreen = ({navigation, route}) => {
           <ActivityIndicator size="large" color="#5500dc" />
         ) : (
           commentList.map(item => (
-            <CommentCard
-              key={item.id}
-              onLongPress={() => {
-                bottomSheetRef.current.snapToIndex(0);
-                setCommentSelected(item);
-              }}
-              onPress={()=>{commentInputRef.current.focus()}}>
-              <UserImage source={{uri: item.userImg}} />
-              <ContentWarapper>
-                <View style={{flexDirection: 'row', alignItems: 'center'}}>
-                  <UserName>{item.userName}</UserName>
-                  <Icon name="time-outline" />
-                  <CommentTime>
-                    {moment(item.commentTime.toDate()).fromNow()}
-                  </CommentTime>
+            <View key={item.id}>
+              <CommentCard
+                onLongPress={() => {
+                  bottomSheetRef.current.snapToIndex(0);
+                  setCommentSelected(item);
+                }}
+                onPress={() => {
+                  commentInputRef.current.focus();
+                  setCommentSelected(item);
+                  setReplyTo(item);
+                  console.log('ReplyId: ', item.id);
+                }}>
+                <UserImage source={{uri: item.userImg}} />
+                <ContentWarapper>
+                  <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                    <UserName>{item.userName}</UserName>
+                  </View>
+                  <CommentText>{item.commentText}</CommentText>
+                  <View style={{flexDirection: 'row', marginTop: 5}}>
+                    <Icon name="time-outline" />
+                    <CommentTime>
+                      {moment(item.commentTime.toDate()).fromNow()}
+                    </CommentTime>
+                  </View>
+                </ContentWarapper>
+              </CommentCard>
+
+              {item.commentReplies.map(item => (
+                <View style={{paddingLeft: 20}} key={item.id}>
+                  <CommentCard
+                    onLongPress={() => {
+                      bottomSheetRef.current.snapToIndex(0);
+                      setCommentSelected(item);
+                    }}
+                    onPress={() => {
+                      commentInputRef.current.focus();
+                      setReplyTo(item);
+                      console.log('ReplyId in Reply: ', item.id);
+                    }}>
+                    <UserImageReply source={{uri: item.userImg}} />
+                    <ContentWarapper>
+                      <View
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                        }}>
+                        <UserName>{item.userName}</UserName>
+                        <Icon
+                          name="caret-forward"
+                          color="#ccc"
+                          style={{marginHorizontal: 4}}
+                        />
+                        <UserName>{item.sendToUserName}</UserName>
+                      </View>
+                      <CommentText>{item.commentText}</CommentText>
+                      <View style={{flexDirection: 'row', marginTop: 5}}>
+                        <Icon name="time-outline" />
+                        <CommentTime>
+                          {moment(item.commentTime.toDate()).fromNow()}
+                        </CommentTime>
+                      </View>
+                    </ContentWarapper>
+                  </CommentCard>
                 </View>
-                <CommentText>{item.commentText}</CommentText>
-              </ContentWarapper>
-            </CommentCard>
+              ))}
+            </View>
           ))
         )}
       </ScrollView>
+
       <CommentContainerWrapper>
-        <CommentInputField
-          ref={commentInputRef}
-          placeholder="Type your comment ..."
-          placeholderTextColor="#ccc"
-          multiline={true}
-          value={commentText}
-          onChangeText={text => setCommentText(text)}
-        />
-        <TouchableOpacity
-          onPress={() => {
-            if (commentText != '') {
-              onAddComment(post);
-              commentInputRef.current.blur();
-              setCommentText('');
-            }
-          }}>
-          <Icon name="send" size={30} color="#2e64e5" />
-        </TouchableOpacity>
+        {replyTo != null ? (
+          <View style={{marginBottom: 10}}>
+            <Text
+              style={{
+                fontSize: 14,
+                fontWeight: 'bold',
+              }}>
+              Replying to {replyTo.userName}
+            </Text>
+            <Text>{replyTo.commentText}</Text>
+          </View>
+        ) : null}
+
+        <View style={{flexDirection: 'row', alignItems: 'center'}}>
+          <CommentInputField
+            ref={commentInputRef}
+            placeholder="Type your comment ..."
+            placeholderTextColor="#ccc"
+            multiline={true}
+            value={commentText}
+            onChangeText={text => setCommentText(text)}
+          />
+          <TouchableOpacity
+            onPress={() => {
+              if (replyTo != null) {
+                if (commentText != '') {
+                  onAddCommentReply(post);
+                  generateId();
+                  commentInputRef.current.blur();
+                  setCommentText('');
+                }
+              } else {
+                if (commentText != '') {
+                  onAddComment(post);
+                  generateId();
+                  commentInputRef.current.blur();
+                  setCommentText('');
+                }
+              }
+            }}>
+            <Icon name="send" size={30} color="#2e64e5" />
+          </TouchableOpacity>
+        </View>
       </CommentContainerWrapper>
 
       <BottomSheet

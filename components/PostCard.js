@@ -63,10 +63,11 @@ const PostCard = ({
     likeText = 'Like';
   }
 
-  if (item.comments.length == 1) {
+  const totalSize = item.comments.reduce((acc, curr) => acc + curr.commentReplies.length, 0);
+  if (item.comments.length + totalSize == 1) {
     commentText = '1 Comment';
-  } else if (item.comments.length > 1) {
-    commentText = item.comments.length + ' Comments';
+  } else if (item.comments.length + totalSize > 1) {
+    commentText = item.comments.length + totalSize + ' Comments';
   } else {
     commentText = 'Comment';
   }

@@ -124,24 +124,36 @@ export default CommentsScreen = ({navigation, route}) => {
                 .then(async snapShot => {
                   const {fname, lname, userImg} = snapShot.data();
 
-                  const sendToUserData = (
-                    await firestore()
-                      .collection('users')
-                      .doc(comments[i].commentReplies[j].sendTo)
-                      .get()
-                  ).data();
-                  const sendToUserfname = sendToUserData.fname;
-                  const sendToUserlname = sendToUserData.lname;
+                  if (comments[i].commentReplies[j].sendTo != '') {
+                    const sendToUserData = (
+                      await firestore()
+                        .collection('users')
+                        .doc(comments[i].commentReplies[j].sendTo)
+                        .get()
+                    ).data();
+                    const sendToUserfname = sendToUserData.fname;
+                    const sendToUserlname = sendToUserData.lname;
 
-                  listReply.push({
-                    id: comments[i].commentReplies[j].id,
-                    userId: comments[i].commentReplies[j].userId,
-                    userName: `${fname} ${lname}`,
-                    sendToUserName: `${sendToUserfname} ${sendToUserlname}`,
-                    userImg: userImg,
-                    commentText: comments[i].commentReplies[j].commentText,
-                    commentTime: comments[i].commentReplies[j].commentTime,
-                  });
+                    listReply.push({
+                      id: comments[i].commentReplies[j].id,
+                      userId: comments[i].commentReplies[j].userId,
+                      userName: `${fname} ${lname}`,
+                      sendToUserName: `${sendToUserfname} ${sendToUserlname}`,
+                      userImg: userImg,
+                      commentText: comments[i].commentReplies[j].commentText,
+                      commentTime: comments[i].commentReplies[j].commentTime,
+                    });
+                  } else {
+                    listReply.push({
+                      id: comments[i].commentReplies[j].id,
+                      userId: comments[i].commentReplies[j].userId,
+                      userName: `${fname} ${lname}`,
+                      sendToUserName: '',
+                      userImg: userImg,
+                      commentText: comments[i].commentReplies[j].commentText,
+                      commentTime: comments[i].commentReplies[j].commentTime,
+                    });
+                  }
                 });
             }
 
@@ -219,9 +231,16 @@ export default CommentsScreen = ({navigation, route}) => {
           }
 
           if (command == 'addCommentReply') {
-            const commentToChange = comments.find(
-              item => item.id === commentSelected.id,
-            );
+            let commentToChange;
+            if (replyTo.length == 1) {
+              commentToChange = comments.find(
+                item => item.id === replyTo[0].id,
+              );
+            } else {
+              commentToChange = comments.find(
+                item => item.id === replyTo[1].id,
+              );
+            }
 
             // console.log('commentToChange: ', commentToChange);
             commentToChange.commentReplies.push({
@@ -230,7 +249,7 @@ export default CommentsScreen = ({navigation, route}) => {
               commentText: commentText,
               commentTime: firestore.Timestamp.fromDate(new Date()),
               sendBy: user.uid,
-              sendTo: commentSelected.userId,
+              sendTo: replyTo.length == 2 ? replyTo[0].userId : '',
             });
           }
 
@@ -279,7 +298,13 @@ export default CommentsScreen = ({navigation, route}) => {
 
   const onAddCommentReply = post => {
     // cập nhật setCommentList
-    const commentToChange = commentList.find(item => item.id === replyTo.id);
+    let commentToChange;
+    if (replyTo.length == 1) {
+      commentToChange = commentList.find(item => item.id === replyTo[0].id);
+    } else {
+      commentToChange = commentList.find(item => item.id === replyTo[1].id);
+    }
+    // console.log('commentToChange: ', commentToChange);
     if (commentToChange) {
       commentToChange.commentReplies.push({
         id: cmtId,
@@ -288,20 +313,30 @@ export default CommentsScreen = ({navigation, route}) => {
         userImg: userData.userImg,
         commentText: commentText,
         commentTime: firestore.Timestamp.fromDate(new Date()),
-        sendToUserName: commentSelected.userName,
+        sendToUserName: replyTo.length == 1 ? '' : replyTo[0].userName,
       });
     }
 
     // cập nhật setPost
-    const commentReplyToChange = post.comments.find(
-      item => item.id === replyTo.id,
-    );
-    commentReplyToChange.commentReplies.push({
-      id: cmtId,
-      userId: user.uid,
-      commentText: commentText,
-      commentTime: firestore.Timestamp.fromDate(new Date()),
-    });
+    let commentReplyToChange;
+    if (replyTo.length == 1) {
+      commentReplyToChange = post.comments.find(
+        item => item.id === replyTo[0].id,
+      );
+    } else {
+      commentReplyToChange = post.comments.find(
+        item => item.id === replyTo[1].id,
+      );
+    }
+    // console.log('commentReplyToChange: ', commentReplyToChange);
+    if (commentReplyToChange) {
+      commentReplyToChange.commentReplies.push({
+        id: cmtId,
+        userId: user.uid,
+        commentText: commentText,
+        commentTime: firestore.Timestamp.fromDate(new Date()),
+      });
+    }
     updatePostComment(post, 'addCommentReply');
   };
 
@@ -420,7 +455,6 @@ export default CommentsScreen = ({navigation, route}) => {
 
   // Hàm xóa post ảnh, sau đó xóa post
   const deletePost = async postId => {
-    console.log('post id was deleted: ', postId);
     await firestore()
       .collection('Posts')
       .doc(postId)
@@ -516,10 +550,8 @@ export default CommentsScreen = ({navigation, route}) => {
           }}
           onLike={() => {
             if (post.liked) {
-              console.log('dislike');
               disLike(post);
             } else {
-              console.log('like');
               onLike(post);
             }
           }}
@@ -527,66 +559,68 @@ export default CommentsScreen = ({navigation, route}) => {
         {isLoading ? (
           <ActivityIndicator size="large" color="#5500dc" />
         ) : (
-          commentList.map(item => (
-            <View key={item.id}>
+          commentList.map(comment => (
+            <View key={comment.id}>
               <CommentCard
                 onLongPress={() => {
                   bottomSheetRef.current.snapToIndex(0);
-                  setCommentSelected(item);
+                  setCommentSelected(comment);
                 }}
                 onPress={() => {
                   commentInputRef.current.focus();
-                  setCommentSelected(item);
-                  setReplyTo(item);
-                  console.log('ReplyId: ', item.id);
+                  setCommentSelected(comment);
+                  setReplyTo([comment]);
                 }}>
-                <UserImage source={{uri: item.userImg}} />
+                <UserImage source={{uri: comment.userImg}} />
                 <ContentWarapper>
                   <View style={{flexDirection: 'row', alignItems: 'center'}}>
-                    <UserName>{item.userName}</UserName>
+                    <UserName>{comment.userName}</UserName>
                   </View>
-                  <CommentText>{item.commentText}</CommentText>
+                  <CommentText>{comment.commentText}</CommentText>
                   <View style={{flexDirection: 'row', marginTop: 5}}>
                     <Icon name="time-outline" />
                     <CommentTime>
-                      {moment(item.commentTime.toDate()).fromNow()}
+                      {moment(comment.commentTime.toDate()).fromNow()}
                     </CommentTime>
                   </View>
                 </ContentWarapper>
               </CommentCard>
 
-              {item.commentReplies.map(item => (
-                <View style={{paddingLeft: 20}} key={item.id}>
+              {comment.commentReplies.map(commentReply => (
+                <View style={{paddingLeft: 20}} key={commentReply.id}>
                   <CommentCard
                     onLongPress={() => {
                       bottomSheetRef.current.snapToIndex(0);
-                      setCommentSelected(item);
+                      setCommentSelected(commentReply);
                     }}
                     onPress={() => {
                       commentInputRef.current.focus();
-                      setReplyTo(item);
-                      console.log('ReplyId in Reply: ', item.id);
+                      setReplyTo([commentReply, comment]);
                     }}>
-                    <UserImageReply source={{uri: item.userImg}} />
+                    <UserImageReply source={{uri: commentReply.userImg}} />
                     <ContentWarapper>
                       <View
                         style={{
                           flexDirection: 'row',
                           alignItems: 'center',
                         }}>
-                        <UserName>{item.userName}</UserName>
-                        <Icon
-                          name="caret-forward"
-                          color="#ccc"
-                          style={{marginHorizontal: 4}}
-                        />
-                        <UserName>{item.sendToUserName}</UserName>
+                        <UserName>{commentReply.userName}</UserName>
+                        {commentReply.sendToUserName != '' ? (
+                          <>
+                            <Icon
+                              name="caret-forward"
+                              color="#ccc"
+                              style={{marginHorizontal: 4}}
+                            />
+                            <UserName>{commentReply.sendToUserName}</UserName>
+                          </>
+                        ) : null}
                       </View>
-                      <CommentText>{item.commentText}</CommentText>
+                      <CommentText>{commentReply.commentText}</CommentText>
                       <View style={{flexDirection: 'row', marginTop: 5}}>
                         <Icon name="time-outline" />
                         <CommentTime>
-                          {moment(item.commentTime.toDate()).fromNow()}
+                          {moment(commentReply.commentTime.toDate()).fromNow()}
                         </CommentTime>
                       </View>
                     </ContentWarapper>
@@ -606,9 +640,9 @@ export default CommentsScreen = ({navigation, route}) => {
                 fontSize: 14,
                 fontWeight: 'bold',
               }}>
-              Replying to {replyTo.userName}
+              Replying to {replyTo[0].userName}
             </Text>
-            <Text>{replyTo.commentText}</Text>
+            <Text>{replyTo[0].commentText}</Text>
           </View>
         ) : null}
 

@@ -73,16 +73,13 @@ const FeedStack = ({navigation}) => {
     <Stack.Navigator>
       <Stack.Screen
         name="TopTabHome"
-        // component={HomeScreen}
         component={TopTabHome}
         options={{
-          // headerTitleAlign: 'center',
           headerTitle: 'iFinder',
           headerTitleStyle: {
             color: '#2e64e5',
             fontFamily: 'Kufam-SemiBoldItalic',
             letterSpacing: 2,
-            // fontFamily: 'Lato-Italic',
             fontSize: 30,
             fontWeight: 'bold',
           },
@@ -116,7 +113,11 @@ const FeedStack = ({navigation}) => {
         }}
       />
 
-      <Stack.Screen name="CommentsScreen" component={CommentsScreen} options={{headerShown:  false}}/>
+      <Stack.Screen
+        name="CommentsScreen"
+        component={CommentsScreen}
+        options={{headerShown: false}}
+      />
 
       <Stack.Screen
         name="AddPostScreen"
@@ -521,6 +522,12 @@ const ProfileStack = ({navigation}) => (
         // ),
       }}
     />
+
+    <Stack.Screen
+      name="CommentsScreen"
+      component={CommentsScreen}
+      options={{headerShown: false}}
+    />
   </Stack.Navigator>
 );
 
@@ -574,14 +581,14 @@ const AppStack = ({route}) => {
       routeName == 'AddPostScreen' ||
       routeName == 'EditProfileScreen' ||
       routeName == 'Chat' ||
-      routeName == 'SearchScreen' || 
+      routeName == 'SearchScreen' ||
       routeName == 'CommentsScreen'
     ) {
       return false;
     }
     return true;
   };
-  
+
   return (
     <Tab.Navigator
       screenOptions={({route, navigation}) => ({

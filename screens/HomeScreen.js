@@ -388,10 +388,11 @@ export default HomeScreen = ({navigation, route}) => {
               onComment={() => {
                 navigation.push('CommentsScreen', {
                   item: item,
+                  followingList: followingList,
                 });
               }}
               onPress={() =>
-                navigation.navigate('HomeProfile', {
+                navigation.push('HomeProfile', {
                   userId: item.userId,
                   followingList: followingList,
                 })

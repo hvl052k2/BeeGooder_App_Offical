@@ -354,8 +354,13 @@ export default HomeScreen = ({navigation, route}) => {
                   onLike(item);
                 }
               }}
+              onComment={() => {
+                navigation.push('CommentsScreen', {
+                  item: item,
+                });
+              }}
               onPress={() =>
-                navigation.navigate('HomeProfile', {
+                navigation.push('HomeProfile', {
                   userId: item.userId,
                   userName: item.userName,
                   followingList: followingList,

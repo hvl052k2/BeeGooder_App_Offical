@@ -139,6 +139,7 @@ export default CommentsScreen = ({navigation, route}) => {
                       userId: comments[i].commentReplies[j].userId,
                       userName: `${fname} ${lname}`,
                       sendToUserName: `${sendToUserfname} ${sendToUserlname}`,
+                      sendTo: comments[i].commentReplies[j].sendTo,
                       userImg: userImg,
                       commentText: comments[i].commentReplies[j].commentText,
                       commentTime: comments[i].commentReplies[j].commentTime,
@@ -557,18 +558,13 @@ export default CommentsScreen = ({navigation, route}) => {
 
   return (
     <Container>
-      <View
-        style={{
-          width: '100%',
-          height: 55,
-          // justifyContent: 'center',
-          alignItems: 'center',
-          flexDirection: 'row'
-        }}>
-        <TouchableOpacity style={{width: 55, height: 55, justifyContent: 'center', alignItems: 'center'}} onPress={()=>navigation.pop()}>
-          <Icon name="arrow-back-sharp" size={25} color='#1c1c1e' />
+      <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.btnBack}
+          onPress={() => navigation.pop()}>
+          <Icon name="arrow-back-sharp" size={25} color="#1c1c1e" />
         </TouchableOpacity>
-        <Text style={{fontSize: 20, color: '#1c1c1e', fontWeight: 'bold'}}>{headerTitle}</Text>
+        <Text style={styles.headerTitle}>{headerTitle}</Text>
       </View>
       <Modal
         isVisible={isModalVisible}
@@ -612,6 +608,12 @@ export default CommentsScreen = ({navigation, route}) => {
               onLike(post);
             }
           }}
+          onPress={() =>
+            navigation.navigate('HomeProfile', {
+              userId: post.userId,
+              followingList: route.params.followingList,
+            })
+          }
         />
         {isLoading ? (
           <ActivityIndicator size="large" color="#5500dc" />
@@ -628,10 +630,27 @@ export default CommentsScreen = ({navigation, route}) => {
                   // setCommentSelected([comment]);
                   setReplyTo([comment]);
                 }}>
-                <UserImage source={{uri: comment.userImg}} />
+                <TouchableOpacity
+                  onPress={() =>
+                    navigation.push('HomeProfile', {
+                      userId: comment.userId,
+                      followingList: route.params.followingList,
+                    })
+                  }>
+                  <UserImage source={{uri: comment.userImg}} />
+                </TouchableOpacity>
+
                 <ContentWarapper>
                   <View style={{flexDirection: 'row', alignItems: 'center'}}>
-                    <UserName>{comment.userName}</UserName>
+                    <TouchableOpacity
+                      onPress={() =>
+                        navigation.push('HomeProfile', {
+                          userId: comment.userId,
+                          followingList: route.params.followingList,
+                        })
+                      }>
+                      <UserName>{comment.userName}</UserName>
+                    </TouchableOpacity>
                   </View>
                   <CommentText>{comment.commentText}</CommentText>
                   <View style={{flexDirection: 'row', marginTop: 5}}>
@@ -655,14 +674,30 @@ export default CommentsScreen = ({navigation, route}) => {
                         commentInputRef.current.focus();
                         setReplyTo([commentReply, comment]);
                       }}>
-                      <UserImageReply source={{uri: commentReply.userImg}} />
+                      <TouchableOpacity
+                        onPress={() =>
+                          navigation.push('HomeProfile', {
+                            userId: commentReply.userId,
+                            followingList: route.params.followingList,
+                          })
+                        }>
+                        <UserImageReply source={{uri: commentReply.userImg}} />
+                      </TouchableOpacity>
                       <ContentWarapper>
                         <View
                           style={{
                             flexDirection: 'row',
                             alignItems: 'center',
                           }}>
-                          <UserName>{commentReply.userName}</UserName>
+                          <TouchableOpacity
+                            onPress={() =>
+                              navigation.push('HomeProfile', {
+                                userId: commentReply.userId,
+                                followingList: route.params.followingList,
+                              })
+                            }>
+                            <UserName>{commentReply.userName}</UserName>
+                          </TouchableOpacity>
                           {commentReply.sendToUserName != '' ? (
                             <>
                               <Icon
@@ -670,7 +705,17 @@ export default CommentsScreen = ({navigation, route}) => {
                                 color="#ccc"
                                 style={{marginHorizontal: 4}}
                               />
-                              <UserName>{commentReply.sendToUserName}</UserName>
+                              <TouchableOpacity
+                                onPress={() =>
+                                  navigation.push('HomeProfile', {
+                                    userId: commentReply.sendTo,
+                                    followingList: route.params.followingList,
+                                  })
+                                }>
+                                <UserName>
+                                  {commentReply.sendToUserName}
+                                </UserName>
+                              </TouchableOpacity>
                             </>
                           ) : null}
                         </View>
@@ -689,63 +734,17 @@ export default CommentsScreen = ({navigation, route}) => {
                 ))
               ) : comment.commentReplies.length > 0 ? (
                 <TouchableOpacity
-                  style={{
-                    marginLeft: 68,
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                  }}
+                  style={styles.btnSeeMore}
                   onPress={() => {
                     setSeeMoreReplies([...seeMoreReplies, comment.id]);
                   }}>
                   <Text style={{fontWeight: 'bold'}}>
                     See {comment.commentReplies.length}{' '}
-                    {comment.commentReplies.length > 1 ? 'answers' : 'answer'}{' '}
+                    {comment.commentReplies.length > 1 ? 'replies' : 'reply'}{' '}
                   </Text>
                   <Icon name="chevron-down" size={15} />
                 </TouchableOpacity>
               ) : null}
-
-              {/* {comment.commentReplies.map(commentReply => (
-                <View style={{paddingLeft: 20}} key={commentReply.id}>
-                  <CommentCard
-                    onLongPress={() => {
-                      bottomSheetRef.current.snapToIndex(0);
-                      setCommentSelected([commentReply, comment]);
-                    }}
-                    onPress={() => {
-                      commentInputRef.current.focus();
-                      setReplyTo([commentReply, comment]);
-                    }}>
-                    <UserImageReply source={{uri: commentReply.userImg}} />
-                    <ContentWarapper>
-                      <View
-                        style={{
-                          flexDirection: 'row',
-                          alignItems: 'center',
-                        }}>
-                        <UserName>{commentReply.userName}</UserName>
-                        {commentReply.sendToUserName != '' ? (
-                          <>
-                            <Icon
-                              name="caret-forward"
-                              color="#ccc"
-                              style={{marginHorizontal: 4}}
-                            />
-                            <UserName>{commentReply.sendToUserName}</UserName>
-                          </>
-                        ) : null}
-                      </View>
-                      <CommentText>{commentReply.commentText}</CommentText>
-                      <View style={{flexDirection: 'row', marginTop: 5}}>
-                        <Icon name="time-outline" />
-                        <CommentTime>
-                          {moment(commentReply.commentTime.toDate()).fromNow()}
-                        </CommentTime>
-                      </View>
-                    </ContentWarapper>
-                  </CommentCard>
-                </View>
-              ))} */}
             </View>
           ))
         )}
@@ -882,5 +881,27 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: 'bold',
     color: '#2e64e5',
+  },
+  btnBack: {
+    width: 55,
+    height: 55,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  header: {
+    width: '100%',
+    height: 55,
+    alignItems: 'center',
+    flexDirection: 'row',
+  },
+  headerTitle: {
+    fontSize: 20,
+    color: '#1c1c1e',
+    fontWeight: 'bold',
+  },
+  btnSeeMore: {
+    marginLeft: 68,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
 });

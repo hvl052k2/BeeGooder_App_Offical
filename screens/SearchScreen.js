@@ -291,7 +291,7 @@ export default SearchScreen = ({route, navigation}) => {
         </View>
         <TouchableOpacity>
           <Icon
-            name="funnel-outline"
+            name="options-outline"
             size={28}
             backgroundColor="#fff"
             style={{marginLeft: 10}}

@@ -53,10 +53,10 @@ export default ProfileScreen = ({navigation, route}) => {
 
   const ref = useRef();
 
-  let followingList;
-  if (route.params) {
-    followingList = route.params.followingList;
-  }
+  // let followingList;
+  // if (route.params) {
+  //   followingList = route.params.followingList;
+  // }
 
   const fetchPosts = async () => {
     try {
@@ -359,9 +359,9 @@ export default ProfileScreen = ({navigation, route}) => {
         }
       });
 
-    const index = followingList.indexOf(route.params.userId);
+    const index = route.params.followingList.indexOf(route.params.userId);
     if (index !== -1) {
-      followingList.splice(index, 1);
+      route.params.followingList.splice(index, 1);
     }
   };
 
@@ -403,7 +403,7 @@ export default ProfileScreen = ({navigation, route}) => {
   };
 
   const checkIsFollowed = () => {
-    if (followingList.includes(route.params.userId)) {
+    if (route.params.followingList.includes(route.params.userId)) {
       setIsFollowed(true);
     } else {
       setIsFollowed(false);
@@ -755,6 +755,12 @@ export default ProfileScreen = ({navigation, route}) => {
                   onLike(item);
                 }
               }}
+              onComment={() => {
+                navigation.push('CommentsScreen', {
+                  item: item,
+                  followingList: following
+                });
+              }}
             />
           )}
           keyExtractor={item => item.id}
@@ -791,6 +797,12 @@ export default ProfileScreen = ({navigation, route}) => {
                   console.log('like');
                   onLike(item);
                 }
+              }}
+              onComment={() => {
+                navigation.push('CommentsScreen', {
+                  item: item,
+                  followingList: following,
+                });
               }}
             />
           )}

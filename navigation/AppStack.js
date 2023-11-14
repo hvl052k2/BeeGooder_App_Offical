@@ -116,7 +116,7 @@ const FeedStack = ({navigation}) => {
         }}
       />
 
-      <Stack.Screen name="CommentsScreen" component={CommentsScreen} options={{headerTitle: 'Comment screen'}}/>
+      <Stack.Screen name="CommentsScreen" component={CommentsScreen} options={{headerShown:  false}}/>
 
       <Stack.Screen
         name="AddPostScreen"

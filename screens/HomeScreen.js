@@ -386,7 +386,7 @@ export default HomeScreen = ({navigation, route}) => {
                 }
               }}
               onComment={() => {
-                navigation.navigate('CommentsScreen', {
+                navigation.push('CommentsScreen', {
                   item: item,
                 });
               }}

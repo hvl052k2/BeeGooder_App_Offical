@@ -59,9 +59,11 @@ export default CommentsScreen = ({navigation, route}) => {
   const [imageShown, setImageShown] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [post, setPost] = useState(route.params.item);
-  const [commentSelected, setCommentSelected] = useState('');
+  const [commentSelected, setCommentSelected] = useState(null);
   const [replyTo, setReplyTo] = useState(null);
   const [cmtId, setCmtId] = useState(null);
+  const [seeMoreReplies, setSeeMoreReplies] = useState('');
+  const [headerTitle, setHeaderTitle] = useState('');
 
   const id = useId();
 
@@ -92,9 +94,7 @@ export default CommentsScreen = ({navigation, route}) => {
       .then(documentSnapshot => {
         if (documentSnapshot.exists) {
           const {fname, lname} = documentSnapshot.data();
-          navigation.setOptions({
-            headerTitle: `This is ${fname} ${lname}'s post`,
-          });
+          setHeaderTitle(`This is ${fname} ${lname}'s post`);
         }
       });
   };
@@ -222,11 +222,25 @@ export default CommentsScreen = ({navigation, route}) => {
           }
 
           if (command == 'deleteComment') {
-            const indexToRemove = comments.findIndex(
-              item => item.id === commentSelected.id,
-            );
-            if (indexToRemove !== -1) {
-              comments.splice(indexToRemove, 1);
+            if (commentSelected.length == 1) {
+              const indexToRemove = comments.findIndex(
+                item => item.id === commentSelected[0].id,
+              );
+              if (indexToRemove !== -1) {
+                comments.splice(indexToRemove, 1);
+              }
+            } else {
+              const commentToChange = comments.find(
+                item => item.id === commentSelected[1].id,
+              );
+
+              const indexToRemove = commentToChange.commentReplies.findIndex(
+                item => item.id === commentSelected[0].id,
+              );
+
+              if (indexToRemove !== -1) {
+                commentToChange.commentReplies.splice(indexToRemove, 1);
+              }
             }
           }
 
@@ -268,18 +282,16 @@ export default CommentsScreen = ({navigation, route}) => {
 
   // Hàm thêm comment
   const onAddComment = post => {
-    setCommentList([
-      ...commentList,
-      {
-        id: cmtId,
-        userId: user.uid,
-        userName: `${userData.fname} ${userData.lname}`,
-        userImg: userData.userImg,
-        commentText: commentText,
-        commentTime: firestore.Timestamp.fromDate(new Date()),
-        commentReplies: [],
-      },
-    ]);
+    commentList.push({
+      id: cmtId,
+      userId: user.uid,
+      userName: `${userData.fname} ${userData.lname}`,
+      userImg: userData.userImg,
+      commentText: commentText,
+      commentTime: firestore.Timestamp.fromDate(new Date()),
+      commentReplies: [],
+    });
+
     setPost({
       ...post,
       comments: [
@@ -293,6 +305,7 @@ export default CommentsScreen = ({navigation, route}) => {
         },
       ],
     });
+
     updatePostComment(post, 'addComment');
   };
 
@@ -304,7 +317,7 @@ export default CommentsScreen = ({navigation, route}) => {
     } else {
       commentToChange = commentList.find(item => item.id === replyTo[1].id);
     }
-    // console.log('commentToChange: ', commentToChange);
+
     if (commentToChange) {
       commentToChange.commentReplies.push({
         id: cmtId,
@@ -328,7 +341,7 @@ export default CommentsScreen = ({navigation, route}) => {
         item => item.id === replyTo[1].id,
       );
     }
-    // console.log('commentReplyToChange: ', commentReplyToChange);
+
     if (commentReplyToChange) {
       commentReplyToChange.commentReplies.push({
         id: cmtId,
@@ -341,15 +354,46 @@ export default CommentsScreen = ({navigation, route}) => {
   };
 
   const onDeleteComment = post => {
-    const tempt_1 = commentList.filter(item => item.id !== commentSelected.id);
-    setCommentList(tempt_1);
+    if (commentSelected.length == 1) {
+      // cập nhật setCommentList
+      const indexToRemove = commentList.findIndex(
+        item => item.id === commentSelected[0].id,
+      );
+      commentList.splice(indexToRemove, 1);
 
-    const tempt_2 = post.comments.filter(
-      item => item.id !== commentSelected.id,
-    );
+      // cập nhật setPost
+      const index = post.comments.findIndex(
+        item => item.id === commentSelected[0].id,
+      );
+      post.comments.splice(index, 1);
+    } else {
+      // cập nhật setCommentList
+      const commentListTempt = commentList.find(
+        item => item.id === commentSelected[1].id,
+      );
 
-    setPost({...post, comments: tempt_2});
+      const indexToRemove = commentListTempt.commentReplies.findIndex(
+        item => item.id === commentSelected[0].id,
+      );
 
+      if (indexToRemove !== -1) {
+        commentListTempt.commentReplies.splice(indexToRemove, 1);
+      }
+
+      // cập nhật setPost
+      const postCommentsTempt = post.comments.find(
+        item => item.id === commentSelected[1].id,
+      );
+
+      const index = postCommentsTempt.commentReplies.findIndex(
+        item => item.id === commentSelected[0].id,
+      );
+
+      if (index !== -1) {
+        postCommentsTempt.commentReplies.splice(index, 1);
+      }
+    }
+    setCommentSelected(null);
     updatePostComment(post, 'deleteComment');
   };
 
@@ -513,6 +557,19 @@ export default CommentsScreen = ({navigation, route}) => {
 
   return (
     <Container>
+      <View
+        style={{
+          width: '100%',
+          height: 55,
+          // justifyContent: 'center',
+          alignItems: 'center',
+          flexDirection: 'row'
+        }}>
+        <TouchableOpacity style={{width: 55, height: 55, justifyContent: 'center', alignItems: 'center'}} onPress={()=>navigation.pop()}>
+          <Icon name="arrow-back-sharp" size={25} color='#1c1c1e' />
+        </TouchableOpacity>
+        <Text style={{fontSize: 20, color: '#1c1c1e', fontWeight: 'bold'}}>{headerTitle}</Text>
+      </View>
       <Modal
         isVisible={isModalVisible}
         hideModalContentWhileAnimating={true}
@@ -564,11 +621,11 @@ export default CommentsScreen = ({navigation, route}) => {
               <CommentCard
                 onLongPress={() => {
                   bottomSheetRef.current.snapToIndex(0);
-                  setCommentSelected(comment);
+                  setCommentSelected([comment]);
                 }}
                 onPress={() => {
                   commentInputRef.current.focus();
-                  setCommentSelected(comment);
+                  // setCommentSelected([comment]);
                   setReplyTo([comment]);
                 }}>
                 <UserImage source={{uri: comment.userImg}} />
@@ -586,12 +643,74 @@ export default CommentsScreen = ({navigation, route}) => {
                 </ContentWarapper>
               </CommentCard>
 
-              {comment.commentReplies.map(commentReply => (
+              {seeMoreReplies.includes(comment.id) == true ? (
+                comment.commentReplies.map(commentReply => (
+                  <View style={{paddingLeft: 20}} key={commentReply.id}>
+                    <CommentCard
+                      onLongPress={() => {
+                        bottomSheetRef.current.snapToIndex(0);
+                        setCommentSelected([commentReply, comment]);
+                      }}
+                      onPress={() => {
+                        commentInputRef.current.focus();
+                        setReplyTo([commentReply, comment]);
+                      }}>
+                      <UserImageReply source={{uri: commentReply.userImg}} />
+                      <ContentWarapper>
+                        <View
+                          style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                          }}>
+                          <UserName>{commentReply.userName}</UserName>
+                          {commentReply.sendToUserName != '' ? (
+                            <>
+                              <Icon
+                                name="caret-forward"
+                                color="#ccc"
+                                style={{marginHorizontal: 4}}
+                              />
+                              <UserName>{commentReply.sendToUserName}</UserName>
+                            </>
+                          ) : null}
+                        </View>
+                        <CommentText>{commentReply.commentText}</CommentText>
+                        <View style={{flexDirection: 'row', marginTop: 5}}>
+                          <Icon name="time-outline" />
+                          <CommentTime>
+                            {moment(
+                              commentReply.commentTime.toDate(),
+                            ).fromNow()}
+                          </CommentTime>
+                        </View>
+                      </ContentWarapper>
+                    </CommentCard>
+                  </View>
+                ))
+              ) : comment.commentReplies.length > 0 ? (
+                <TouchableOpacity
+                  style={{
+                    marginLeft: 68,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                  }}
+                  onPress={() => {
+                    setSeeMoreReplies([...seeMoreReplies, comment.id]);
+                  }}>
+                  <Text style={{fontWeight: 'bold'}}>
+                    See {comment.commentReplies.length}{' '}
+                    {comment.commentReplies.length > 1 ? 'answers' : 'answer'}{' '}
+                  </Text>
+                  <Icon name="chevron-down" size={15} />
+                </TouchableOpacity>
+              ) : null}
+
+              {/* {comment.commentReplies.map(commentReply => (
                 <View style={{paddingLeft: 20}} key={commentReply.id}>
                   <CommentCard
                     onLongPress={() => {
                       bottomSheetRef.current.snapToIndex(0);
-                      setCommentSelected(commentReply);
+                      setCommentSelected([commentReply, comment]);
                     }}
                     onPress={() => {
                       commentInputRef.current.focus();
@@ -626,7 +745,7 @@ export default CommentsScreen = ({navigation, route}) => {
                     </ContentWarapper>
                   </CommentCard>
                 </View>
-              ))}
+              ))} */}
             </View>
           ))
         )}
@@ -685,7 +804,7 @@ export default CommentsScreen = ({navigation, route}) => {
         snapPoints={snapPoints}
         backdropComponent={backdropComponent}>
         <View style={styles.bottomSheetContainer}>
-          {commentSelected.userId == user.uid ? (
+          {commentSelected != null && commentSelected[0].userId == user.uid ? (
             <TouchableOpacity
               style={styles.panelButton}
               onPress={() => {
